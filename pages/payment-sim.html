@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Payment Simulator - HersStep</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="top-bar">
+            <span>Free shipping on orders over $100</span>
+            <span>Contact: support@hersstep.com</span>
+        </div>
+        <nav class="nav-container">
+            <a href="index.html" class="logo">HersStep</a>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="products.html">Shop</a></li>
+                <li class="auth-links"></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <h1>Payment Simulator</h1>
+            <p>Use this page to simulate a payment result for testing flows.</p>
+
+            <div class="card" style="margin-bottom:1rem;">
+                <div class="card-body">
+                    <h2>Pending Order</h2>
+                    <div id="pending-order-details">Loading pending order...</div>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+                <button id="simulate-success" class="btn btn-primary">Simulate Success</button>
+                <button id="simulate-failure" class="btn btn-secondary">Simulate Failure</button>
+                <a href="checkout.html" class="btn btn-link">Return to Checkout</a>
+            </div>
+
+            <div id="sim-message" style="margin-top:1rem;"></div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About HersStep</h3>
+                <p>Your destination for stylish and comfortable women's footwear.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        function renderPending() {
+            const pendingRaw = localStorage.getItem('hersstep_pendingOrder');
+            const container = document.getElementById('pending-order-details');
+            if (!pendingRaw) {
+                container.innerHTML = '<div class="error-message">No pending order found. Return to checkout to create an order.</div>';
+                document.getElementById('simulate-success').disabled = true;
+                return null;
+            }
+
+            const pending = JSON.parse(pendingRaw);
+            const subtotal = cart.getTotal();
+            const shipping = subtotal >= 100 ? 0 : 9.99;
+            const html = `
+                <div style="margin-bottom:0.5rem;"><strong>Payment Method:</strong> ${pending.paymentMethod}</div>
+                <div style="margin-bottom:0.5rem;"><strong>Shipping:</strong> ${pending.shippingAddress.fullName}, ${pending.shippingAddress.address}, ${pending.shippingAddress.city} ${pending.shippingAddress.zipCode}</div>
+                <div style="margin-top:0.5rem;"><strong>Items:</strong></div>
+                ${store.cart.map(item => `<div style="display:flex; justify-content:space-between;">${item.name} x${item.quantity} <span>${formatCurrency(item.price*item.quantity)}</span></div>`).join('')}
+                <hr>
+                <div style="display:flex; justify-content:space-between;"><span>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>Discount</span><span>-${formatCurrency(pending.discount || 0)}</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>Shipping</span><span>${shipping === 0 ? 'FREE' : formatCurrency(shipping)}</span></div>
+                <hr>
+                <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Total</span><span>${formatCurrency(pending.total)}</span></div>
+            `;
+            container.innerHTML = html;
+            return pending;
+        }
+
+        document.getElementById('simulate-success').addEventListener('click', function() {
+            const pending = renderPending();
+            const msg = document.getElementById('sim-message');
+            if (!pending) return;
+            try {
+                const newOrder = orders.place(pending);
+                localStorage.removeItem('hersstep_pendingOrder');
+                msg.innerHTML = '<div style="color:var(--success-color);">Payment successful — order completed.</div>';
+                setTimeout(() => {
+                    window.location.href = 'order-confirmation.html?orderId=' + newOrder.id;
+                }, 700);
+            } catch (e) {
+                msg.innerHTML = '<div class="error-message">' + (e.message || 'Failed to place order') + '</div>';
+            }
+        });
+
+        document.getElementById('simulate-failure').addEventListener('click', function() {
+            const msg = document.getElementById('sim-message');
+            msg.innerHTML = '<div class="error-message">Payment failed. Returning to checkout...</div>';
+            // Keep the pending order so user can retry; redirect back to checkout
+            setTimeout(() => {
+                window.location.href = 'checkout.html?payment=failed';
+            }, 700);
+        });
+
+        // Render when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPending();
+        });
+    </script>
+</body>
+</html>

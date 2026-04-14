@@ -1,6 +1,6 @@
 # HersStep Online Shop - Prototype
 
-A fully functional e-commerce website prototype for women's footwear, built according to the requirements specification.
+A fully functional e-commerce website prototype for women's footwear. This repo contains a client-side, static prototype (no backend) used for testing UI flows, checkout, promo codes, and order persistence via browser storage.
 
 ## 🚀 Getting Started
 
@@ -28,7 +28,8 @@ Simply open `index.html` in your web browser to start using the prototype. No se
 
 ### Admin Account
 - **Email:** admin@hersstep.com
-- **Password:** admin123
+- **Password:** admin123  
+_Note: Admin UI is not part of the current prototype; staff pages are included for product/order workflows._
 
 ## 📁 Project Structure
 
@@ -52,12 +53,11 @@ HersStep/
 │   ├── order-details.html    # Individual order view
 │   ├── profile.html          # Customer profile
 │   ├── about.html            # About page
+│   ├── payment-sim.html      # Payment simulator (choose success/failure)
 │   ├── staff-dashboard.html  # Staff dashboard
 │   ├── staff-products.html   # Product management
 │   ├── staff-orders.html     # Order management
-│   ├── staff-reports.html    # Sales reports
-│   ├── admin-dashboard.html  # Admin dashboard
-│   └── admin-staff.html      # Staff account management
+│   └── staff-reports.html    # Sales reports
 ├── requirements.md           # Requirements specification
 ├── agent.md                  # Agent definitions
 └── README.md                 # This file
@@ -80,21 +80,8 @@ HersStep/
 - ✅ Contact support forms
 - ✅ Order notifications
 
-### Staff Features (S-01 to S-19)
-- ✅ Staff login
-- ✅ Product management (add, edit, delete)
-- ✅ Stock level updates
-- ✅ Order management
-- ✅ Order status updates
-- ✅ Customer communication
-- ✅ Dashboard with statistics
-- ✅ Sales reports generation
-
-### Admin Features (A-01 to A-04)
-- ✅ Admin login
-- ✅ Create staff accounts
-- ✅ Deactivate staff accounts
-- ✅ View and edit staff accounts
+### Staff Features
+Staff pages are included for product and order management (read-only in this prototype). Admin UI is not included.
 
 ### UI/UX Features (U-01 to U-04)
 - ✅ Responsive design (desktop & mobile)
@@ -106,14 +93,14 @@ HersStep/
 
 ### For Testers
 
-1. **Start Testing:** Open `index.html` in your browser
+1. **Start Testing:** Open `index.html` in your browser (recommended: use Live Server for consistent behavior)
 2. **Follow Checklist:** Use the Tester Checklist in `requirements.md`
 3. **Report Issues:** Create/update `Mistakes.md` with any failures
-4. **Test All Roles:** Test as customer, staff, and admin
+4. **Test Customer Flow:** Staff/Admin UIs are not present in this prototype
 
 ### Test Scenarios
 
-#### Customer Flow
+#### Customer Flow (checkout + payment simulator)
 1. Register new account → C-01
 2. Try duplicate email → C-02
 3. Login → C-03
@@ -122,7 +109,7 @@ HersStep/
 6. Add to cart → C-10
 7. Modify cart → C-11, C-12
 8. Checkout with promo → C-13, C-14, C-15
-9. Place order → C-16
+9. Place order → C-16 (order placement now uses a payment simulator)
 10. View order history → C-20
 11. Cancel order → C-22
 
@@ -151,23 +138,22 @@ HersStep/
 ## 🔧 Technical Details
 
 - **Vanilla JavaScript:** No frameworks or libraries required
-- **Session Storage:** Cart and login state persist across page reloads
-- **Mock Data:** Pre-populated products and test accounts
+- **localStorage:** Cart, user session and orders are persisted in `localStorage` (keys: `hersstep_cart`, `hersstep_currentUser`, `hersstep_orders`, `hersstep_pendingOrder`)
+- **Mock Data:** Pre-populated products and test accounts (staff/admin UI removed)
 - **Client-Side Only:** No backend required for prototype
 
 ## 📝 Notes
 
-- Payment processing is simulated (mock)
-- Email notifications are simulated
-- All data is stored in browser memory/session
-- Refresh clears orders and cart (unless session stored)
+- Payment processing is simulated via `pages/payment-sim.html` (you can choose success or failure to test flows)
+- Promo codes available: `WELCOME10` (10% off), `SAVE20` (20% off), `FLAT15` ($15 off), `TEST50` (50% off — for testing)
+- All main data is persisted to `localStorage`; clearing browser storage will remove saved carts, sessions and orders
 
 ## 🐛 Known Limitations
 
-- No persistent database (data resets on browser close)
+- No persistent backend database — data is scoped to the browser's `localStorage` and will be lost if cleared
 - No real email sending
-- No real payment processing
-- No file uploads for product images (using emoji placeholders)
+- No real payment processing (use the payment simulator to finalize orders)
+- No file uploads for product images (emoji placeholders used)
 
 ## 📞 Support
 
@@ -175,5 +161,5 @@ For issues or questions about the prototype, please refer to the requirements in
 
 ---
 
-**Version:** 1.0.0  
+**Version:** 1.0.1  
 **Last Updated:** 2026-04-14

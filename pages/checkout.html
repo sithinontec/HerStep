@@ -13,9 +13,9 @@
             <span>Contact: support@hersstep.com</span>
         </div>
         <nav class="nav-container">
-            <a href="../index.html" class="logo">HersStep</a>
+            <a href="index.html" class="logo">HersStep</a>
             <ul class="nav-menu">
-                <li><a href="../index.html">Home</a></li>
+                <li><a href="index.html">Home</a></li>
                 <li><a href="products.html">Shop</a></li>
                 <li class="auth-links"></li>
             </ul>
@@ -54,7 +54,48 @@
                             </form>
                         </div>
                     </div>
-                    
+
+                    <!-- Create account during checkout (optional) -->
+                    <div class="card" id="create-account-card" style="margin-bottom: 2rem;">
+                        <div class="card-body">
+                            <h2 style="margin-bottom: 1rem;">Create an account (optional)</h2>
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" id="create-account-checkbox">
+                                <span>Create an account for faster checkout</span>
+                            </label>
+                            <div id="create-account-section" style="display: none; margin-top: 1rem;">
+                                <div class="form-group">
+                                    <label for="reg-firstName">First Name *</label>
+                                    <input type="text" id="reg-firstName" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-lastName">Last Name *</label>
+                                    <input type="text" id="reg-lastName" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-age">Age</label>
+                                    <input type="number" id="reg-age" class="form-control" min="13" max="120">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-email">Email *</label>
+                                    <input type="email" id="reg-email" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-phone">Phone</label>
+                                    <input type="tel" id="reg-phone" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-password">Password *</label>
+                                    <input type="password" id="reg-password" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-confirm-password">Confirm Password *</label>
+                                    <input type="password" id="reg-confirm-password" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Payment Method -->
                     <div class="card" style="margin-bottom: 2rem;">
                         <div class="card-body">
@@ -209,39 +250,75 @@
         function placeOrder() {
             const errorEl = document.getElementById('error-message');
             errorEl.style.display = 'none';
-            
+
             // Validate shipping info
             const fullName = document.getElementById('fullName').value.trim();
             const address = document.getElementById('address').value.trim();
             const city = document.getElementById('city').value.trim();
             const zipCode = document.getElementById('zipCode').value.trim();
-            
+
             if (!fullName || !address || !city || !zipCode) {
                 errorEl.textContent = 'Please fill in all shipping information';
                 errorEl.style.display = 'block';
                 return;
             }
-            
+
+            // If guest and user chose to create account during checkout, register first
             if (!store.currentUser) {
-                errorEl.textContent = 'Please login to place an order';
-                errorEl.style.display = 'block';
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
-                return;
+                const createAccountCheckbox = document.getElementById('create-account-checkbox');
+                const createAccount = createAccountCheckbox && createAccountCheckbox.checked;
+
+                if (createAccount) {
+                    const firstName = document.getElementById('reg-firstName').value.trim();
+                    const lastName = document.getElementById('reg-lastName').value.trim();
+                    const age = parseInt(document.getElementById('reg-age').value) || 18;
+                    const email = document.getElementById('reg-email').value.trim();
+                    const phone = document.getElementById('reg-phone').value.trim();
+                    const password = document.getElementById('reg-password').value;
+                    const confirmPassword = document.getElementById('reg-confirm-password').value;
+
+                    if (!firstName || !lastName || !email || !password) {
+                        errorEl.textContent = 'Please fill in your account details to register';
+                        errorEl.style.display = 'block';
+                        return;
+                    }
+
+                    if (password !== confirmPassword) {
+                        errorEl.textContent = 'Passwords do not match';
+                        errorEl.style.display = 'block';
+                        return;
+                    }
+
+                    try {
+                        auth.register(firstName, lastName, age, email, phone, password);
+                        showNotification('Account created. Continuing checkout...', 'success');
+                        updateNav();
+                    } catch (err) {
+                        errorEl.textContent = err.message;
+                        errorEl.style.display = 'block';
+                        return;
+                    }
+                } else {
+                    errorEl.textContent = 'Please login to place an order';
+                    errorEl.style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+                    return;
+                }
             }
-            
+
             if (store.cart.length === 0) {
                 errorEl.textContent = 'Your cart is empty';
                 errorEl.style.display = 'block';
                 return;
             }
-            
+
             const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
             const subtotal = cart.getTotal();
             const shipping = subtotal >= 100 ? 0 : 9.99;
             const total = subtotal - discountAmount + shipping;
-            
+
             // Simulate payment processing
             const orderData = {
                 total,
@@ -254,19 +331,53 @@
                     zipCode
                 }
             };
-            
+
             try {
-                const newOrder = orders.place(orderData);
-                showNotification('Order placed successfully!', 'success');
+                // Save pending order and redirect to payment simulator
+                localStorage.setItem('hersstep_pendingOrder', JSON.stringify(orderData));
+                showNotification('Redirecting to payment simulator...', 'info');
                 setTimeout(() => {
-                    window.location.href = 'order-confirmation.html?orderId=' + newOrder.id;
-                }, 1000);
+                    window.location.href = 'payment-sim.html';
+                }, 600);
             } catch (error) {
                 errorEl.textContent = error.message;
                 errorEl.style.display = 'block';
             }
         }
         
+        // Handle return from payment simulator and prefill pending order
+        (function handlePaymentReturn() {
+            const params = new URLSearchParams(window.location.search);
+            const paymentStatus = params.get('payment');
+            const pendingRaw = localStorage.getItem('hersstep_pendingOrder');
+            if (pendingRaw) {
+                try {
+                    const pending = JSON.parse(pendingRaw);
+                    // Prefill shipping info so retry is fast
+                    if (pending.shippingAddress) {
+                        document.getElementById('fullName').value = pending.shippingAddress.fullName || '';
+                        document.getElementById('address').value = pending.shippingAddress.address || '';
+                        document.getElementById('city').value = pending.shippingAddress.city || '';
+                        document.getElementById('zipCode').value = pending.shippingAddress.zipCode || '';
+                    }
+                    // Restore discount amount for totals
+                    if (typeof pending.discount === 'number') {
+                        discountAmount = pending.discount;
+                    }
+                } catch (e) {
+                    // ignore parse errors
+                }
+            }
+
+            if (paymentStatus === 'failed') {
+                const errorEl = document.getElementById('error-message');
+                if (errorEl) {
+                    errorEl.textContent = 'Payment failed. Please verify your payment details and try again.';
+                    errorEl.style.display = 'block';
+                }
+            }
+        })();
+
         // Payment method change handler
         document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
             radio.addEventListener('change', function() {
@@ -274,7 +385,20 @@
                 cardDetails.style.display = this.value === 'credit' ? 'block' : 'none';
             });
         });
-        
+
+        // Create-account toggle and initial visibility
+        const createAccountCheckbox = document.getElementById('create-account-checkbox');
+        const createAccountSection = document.getElementById('create-account-section');
+        const createAccountCard = document.getElementById('create-account-card');
+        if (createAccountCheckbox && createAccountSection) {
+            createAccountCheckbox.addEventListener('change', function(e) {
+                createAccountSection.style.display = e.target.checked ? 'block' : 'none';
+            });
+            if (store.currentUser && createAccountCard) {
+                createAccountCard.style.display = 'none';
+            }
+        }
+
         // Initialize
         renderOrderSummary();
     </script>
