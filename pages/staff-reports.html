@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Reports - HersStep</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="top-bar">
+            <span>Staff Portal - HersStep</span>
+            <span>Contact: admin@hersstep.com</span>
+        </div>
+        <nav class="nav-container">
+            <a href="../index.html" class="logo">HersStep</a>
+            <ul class="nav-menu">
+                <li><a href="staff-dashboard.html">Dashboard</a></li>
+                <li><a href="staff-products.html">Products</a></li>
+                <li><a href="staff-orders.html">Orders</a></li>
+                <li><a href="staff-reports.html">Reports</a></li>
+                <li class="auth-links"></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <h1 style="margin-bottom: 2rem;">Sales Reports</h1>
+            
+            <div class="filter-section">
+                <div class="filter-grid">
+                    <div class="form-group">
+                        <label for="report-period">Report Period</label>
+                        <select id="report-period" class="form-control">
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month" selected>This Month</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <h3>Total Orders</h3>
+                    <div class="stat-value" id="report-orders">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Revenue</h3>
+                    <div class="stat-value" id="report-revenue">$0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Average Order Value</h3>
+                    <div class="stat-value" id="report-avg">$0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Items Sold</h3>
+                    <div class="stat-value" id="report-items">0</div>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 style="margin-bottom: 1rem;">Top Selling Products</h2>
+                        <div id="top-products">
+                            <!-- Top products loaded dynamically -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <h2 style="margin-bottom: 1rem;">Orders by Status</h2>
+                        <div id="status-breakdown">
+                            <!-- Status breakdown loaded dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top: 2rem;">
+                <div class="card-body">
+                    <h2 style="margin-bottom: 1rem;">Recent Orders</h2>
+                    <div class="table" style="overflow-x: auto;">
+                        <table style="min-width: 800px;">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Date</th>
+                                    <th>Customer</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-orders-table">
+                                <!-- Recent orders loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Staff Portal</h3>
+                <p>Internal use only</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        function checkStaffAuth() {
+            if (!store.currentUser || store.currentUser.role !== 'staff') {
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+        
+        function generateReport() {
+            const period = document.getElementById('report-period').value;
+            const now = new Date();
+            let filteredOrders = store.orders;
+            
+            // Filter by period
+            if (period !== 'all') {
+                const startDate = new Date();
+                if (period === 'today') {
+                    startDate.setHours(0, 0, 0, 0);
+                } else if (period === 'week') {
+                    startDate.setDate(now.getDate() - now.getDay());
+                    startDate.setHours(0, 0, 0, 0);
+                } else if (period === 'month') {
+                    startDate.setDate(1);
+                    startDate.setHours(0, 0, 0, 0);
+                }
+                filteredOrders = store.orders.filter(o => new Date(o.createdAt) >= startDate);
+            }
+            
+            // Calculate stats
+            const totalOrders = filteredOrders.length;
+            const totalRevenue = filteredOrders.reduce((sum, o) => sum + o.total, 0);
+            const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+            const totalItems = filteredOrders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0);
+            
+            document.getElementById('report-orders').textContent = totalOrders;
+            document.getElementById('report-revenue').textContent = formatCurrency(totalRevenue);
+            document.getElementById('report-avg').textContent = formatCurrency(avgOrderValue);
+            document.getElementById('report-items').textContent = totalItems;
+            
+            // Top products
+            const productSales = {};
+            filteredOrders.forEach(order => {
+                order.items.forEach(item => {
+                    if (!productSales[item.name]) {
+                        productSales[item.name] = 0;
+                    }
+                    productSales[item.name] += item.quantity;
+                });
+            });
+            
+            const topProducts = Object.entries(productSales)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            document.getElementById('top-products').innerHTML = topProducts.length > 0 ?
+                topProducts.map(([name, qty], index) => `
+                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                        <span>${index + 1}. ${name}</span>
+                        <span style="font-weight: bold;">${qty} sold</span>
+                    </div>
+                `).join('') : '<p style="color: var(--text-light);">No sales data</p>';
+            
+            // Status breakdown
+            const statusCounts = {};
+            filteredOrders.forEach(order => {
+                statusCounts[order.status] = (statusCounts[order.status] || 0) + 1;
+            });
+            
+            document.getElementById('status-breakdown').innerHTML = Object.entries(statusCounts).map(([status, count]) => `
+                <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="text-transform: capitalize;">${status}</span>
+                    <span style="font-weight: bold;">${count}</span>
+                </div>
+            `).join('') || '<p style="color: var(--text-light);">No data</p>';
+            
+            // Recent orders table
+            const recentOrders = filteredOrders.slice(-10).reverse();
+            document.getElementById('recent-orders-table').innerHTML = recentOrders.length > 0 ?
+                recentOrders.map(order => `
+                    <tr>
+                        <td><strong>${order.id}</strong></td>
+                        <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                        <td>${getCustomerName(order.userId)}</td>
+                        <td>${formatCurrency(order.total)}</td>
+                        <td>
+                            <span style="padding: 0.25rem 0.75rem; background: ${getStatusColor(order.status)}; color: white; border-radius: 20px; font-size: 0.875rem;">
+                                ${order.status}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('') : '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No orders</td></tr>';
+            
+            showNotification('Report generated!', 'success');
+        }
+        
+        function getCustomerName(userId) {
+            const user = store.users.find(u => u.id === userId);
+            return user ? `${user.firstName} ${user.lastName}` : 'Unknown';
+        }
+        
+        function getStatusColor(status) {
+            const colors = {
+                'placed': 'var(--primary-color)',
+                'processing': 'var(--warning-color)',
+                'shipped': '#2196f3',
+                'delivered': 'var(--success-color)',
+                'cancelled': 'var(--error-color)'
+            };
+            return colors[status] || 'var(--text-light)';
+        }
+        
+        if (checkStaffAuth()) {
+            generateReport();
+        }
+    </script>
+</body>
+</html>

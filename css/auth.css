@@ -1,0 +1,48 @@
+/* ========================================
+   HersStep - Auth Pages Styles
+   ======================================== */
+
+.auth-container {
+    max-width: 500px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-header h1 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.auth-header p {
+    color: var(--text-light);
+}
+
+.auth-divider {
+    text-align: center;
+    margin: 1.5rem 0;
+    color: var(--text-light);
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--text-light);
+}
+
+.auth-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Staff - HersStep</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="top-bar">
+            <span>Admin Portal - HersStep</span>
+            <span>Contact: admin@hersstep.com</span>
+        </div>
+        <nav class="nav-container">
+            <a href="../index.html" class="logo">HersStep</a>
+            <ul class="nav-menu">
+                <li><a href="admin-dashboard.html">Dashboard</a></li>
+                <li><a href="admin-staff.html">Manage Staff</a></li>
+                <li class="auth-links"></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h1>Staff Management</h1>
+                <button class="btn btn-primary" onclick="showAddStaffModal()">+ Add Staff Account</button>
+            </div>
+            
+            <div class="table" style="overflow-x: auto;">
+                <table style="min-width: 800px;">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Created</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staff-table">
+                        <!-- Staff loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add/Edit Staff Modal -->
+    <div id="staff-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title" style="margin-bottom: 1.5rem;">Add Staff Account</h2>
+            
+            <form id="staff-form">
+                <input type="hidden" id="staff-id">
+                
+                <div class="form-group">
+                    <label for="staff-firstName">First Name *</label>
+                    <input type="text" id="staff-firstName" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="staff-lastName">Last Name *</label>
+                    <input type="text" id="staff-lastName" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="staff-age">Age *</label>
+                    <input type="number" id="staff-age" class="form-control" min="18" max="120" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="staff-email">Email *</label>
+                    <input type="email" id="staff-email" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="staff-role">Role *</label>
+                    <select id="staff-role" class="form-control" required>
+                        <option value="staff">Staff</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="staff-password">Password *</label>
+                    <input type="password" id="staff-password" class="form-control" minlength="6" required>
+                    <small style="color: var(--text-light);">Must be at least 6 characters</small>
+                </div>
+                
+                <div id="error-message" class="error-message" style="display: none;"></div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">Save Account</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Admin Portal</h3>
+                <p>Internal use only</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        function checkAdminAuth() {
+            if (!store.currentUser || store.currentUser.role !== 'admin') {
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+        
+        function renderStaff() {
+            const tbody = document.getElementById('staff-table');
+            const staffUsers = store.users.filter(u => u.role === 'staff' || u.role === 'admin');
+            
+            if (staffUsers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No staff accounts found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = staffUsers.map(user => `
+                <tr>
+                    <td><strong>${user.firstName} ${user.lastName}</strong></td>
+                    <td>${user.email}</td>
+                    <td><span style="text-transform: capitalize;">${user.role}</span></td>
+                    <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td>
+                        <span style="padding: 0.25rem 0.75rem; background: ${user.active !== false ? 'var(--success-color)' : 'var(--error-color)'}; color: white; border-radius: 20px; font-size: 0.875rem;">
+                            ${user.active !== false ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="editStaff(${user.id})" style="padding: 0.25rem 0.5rem; margin-right: 0.25rem;">✏️</button>
+                        <button class="btn ${user.active !== false ? 'btn-danger' : 'btn-success'}" onclick="toggleStaffStatus(${user.id})" style="padding: 0.25rem 0.5rem;">
+                            ${user.active !== false ? 'Deactivate' : 'Activate'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function showAddStaffModal() {
+            document.getElementById('modal-title').textContent = 'Add Staff Account';
+            document.getElementById('staff-form').reset();
+            document.getElementById('staff-id').value = '';
+            document.getElementById('staff-modal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('staff-modal').style.display = 'none';
+            document.getElementById('error-message').style.display = 'none';
+        }
+        
+        function editStaff(userId) {
+            const user = store.users.find(u => u.id === userId);
+            if (!user) return;
+            
+            document.getElementById('modal-title').textContent = 'Edit Staff Account';
+            document.getElementById('staff-id').value = user.id;
+            document.getElementById('staff-firstName').value = user.firstName;
+            document.getElementById('staff-lastName').value = user.lastName;
+            document.getElementById('staff-age').value = user.age;
+            document.getElementById('staff-email').value = user.email;
+            document.getElementById('staff-role').value = user.role;
+            document.getElementById('staff-password').value = '';
+            document.getElementById('staff-modal').style.display = 'block';
+        }
+        
+        document.getElementById('staff-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const userId = document.getElementById('staff-id').value;
+            const userData = {
+                firstName: document.getElementById('staff-firstName').value.trim(),
+                lastName: document.getElementById('staff-lastName').value.trim(),
+                age: parseInt(document.getElementById('staff-age').value),
+                email: document.getElementById('staff-email').value.trim(),
+                role: document.getElementById('staff-role').value,
+                password: document.getElementById('staff-password').value,
+                active: true
+            };
+            
+            const errorEl = document.getElementById('error-message');
+            
+            try {
+                if (userId) {
+                    // Update existing staff
+                    const userIndex = store.users.findIndex(u => u.id === parseInt(userId));
+                    if (userIndex !== -1) {
+                        store.users[userIndex] = { 
+                            ...store.users[userIndex], 
+                            ...userData,
+                            updatedAt: new Date().toISOString()
+                        };
+                        showNotification('Staff account updated!', 'success');
+                    }
+                } else {
+                    // Create new staff
+                    auth.register(
+                        userData.firstName,
+                        userData.lastName,
+                        userData.age,
+                        userData.email,
+                        null,
+                        userData.password,
+                        userData.role
+                    );
+                    showNotification('Staff account created!', 'success');
+                }
+                
+                closeModal();
+                renderStaff();
+            } catch (error) {
+                errorEl.textContent = error.message;
+                errorEl.style.display = 'block';
+            }
+        });
+        
+        function toggleStaffStatus(userId) {
+            const user = store.users.find(u => u.id === userId);
+            if (!user) return;
+            
+            user.active = user.active !== false;
+            showNotification(
+                user.active ? 'Staff account activated!' : 'Staff account deactivated!', 
+                'success'
+            );
+            renderStaff();
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('staff-modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+        
+        if (checkAdminAuth()) {
+            renderStaff();
+        }
+    </script>
+</body>
+</html>

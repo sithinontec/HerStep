@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation - HersStep</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="top-bar">
+            <span>Free shipping on orders over $100</span>
+            <span>Contact: support@hersstep.com</span>
+        </div>
+        <nav class="nav-container">
+            <a href="../index.html" class="logo">HersStep</a>
+            <ul class="nav-menu">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="products.html">Shop</a></li>
+                <li class="auth-links"></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="card" style="max-width: 600px; margin: 2rem auto; text-align: center;">
+                <div class="card-body">
+                    <div style="font-size: 5rem; margin-bottom: 1rem;">✅</div>
+                    <h1 style="color: var(--success-color); margin-bottom: 1rem;">Order Confirmed!</h1>
+                    <p style="color: var(--text-light); margin-bottom: 2rem;">Thank you for your purchase</p>
+                    
+                    <div id="order-details" style="text-align: left; background: var(--light-gray); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                        <!-- Order details loaded dynamically -->
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <a href="orders.html" class="btn btn-primary">View Order History</a>
+                        <a href="products.html" class="btn btn-secondary">Continue Shopping</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About HersStep</h3>
+                <p>Your destination for stylish and comfortable women's footwear.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <ul>
+                    <li>📧 support@hersstep.com</li>
+                    <li>📞 1-800-HERSTEP</li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        function loadOrderDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('orderId');
+            
+            if (!orderId) {
+                document.getElementById('order-details').innerHTML = '<p>Order not found</p>';
+                return;
+            }
+            
+            const order = store.orders.find(o => o.id === orderId);
+            
+            if (!order) {
+                document.getElementById('order-details').innerHTML = '<p>Order not found</p>';
+                return;
+            }
+            
+            const container = document.getElementById('order-details');
+            container.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <strong>Order ID:</strong> ${order.id}<br>
+                    <strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}<br>
+                    <strong>Status:</strong> <span style="color: var(--success-color); font-weight: bold;">${order.status.toUpperCase()}</span>
+                </div>
+                <hr style="margin: 1rem 0;">
+                <div style="margin-bottom: 1rem;">
+                    <strong>Items:</strong>
+                    <ul style="margin-top: 0.5rem;">
+                        ${order.items.map(item => `<li>${item.name} x${item.quantity} - ${formatCurrency(item.price * item.quantity)}</li>`).join('')}
+                    </ul>
+                </div>
+                <hr style="margin: 1rem 0;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.25rem;">
+                    <span>Total Paid:</span>
+                    <span style="color: var(--primary-color);">${formatCurrency(order.total)}</span>
+                </div>
+            `;
+        }
+        
+        loadOrderDetails();
+    </script>
+</body>
+</html>

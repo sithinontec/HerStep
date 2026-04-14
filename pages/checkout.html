@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - HersStep</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="top-bar">
+            <span>Free shipping on orders over $100</span>
+            <span>Contact: support@hersstep.com</span>
+        </div>
+        <nav class="nav-container">
+            <a href="../index.html" class="logo">HersStep</a>
+            <ul class="nav-menu">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="products.html">Shop</a></li>
+                <li class="auth-links"></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <h1 style="margin-bottom: 2rem;">Checkout</h1>
+            
+            <div class="checkout-grid">
+                <div>
+                    <!-- Shipping Information -->
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <div class="card-body">
+                            <h2 style="margin-bottom: 1rem;">Shipping Information</h2>
+                            <form id="shipping-form">
+                                <div class="form-group">
+                                    <label for="fullName">Full Name *</label>
+                                    <input type="text" id="fullName" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="address">Address *</label>
+                                    <input type="text" id="address" class="form-control" required>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                                    <div class="form-group">
+                                        <label for="city">City *</label>
+                                        <input type="text" id="city" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="zipCode">ZIP Code *</label>
+                                        <input type="text" id="zipCode" class="form-control" required>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Method -->
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <div class="card-body">
+                            <h2 style="margin-bottom: 1rem;">Payment Method</h2>
+                            <div class="form-group">
+                                <label>
+                                    <input type="radio" name="paymentMethod" value="credit" checked> 
+                                    💳 Credit/Debit Card
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="radio" name="paymentMethod" value="paypal"> 
+                                    🅿️ PayPal
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="radio" name="paymentMethod" value="bank"> 
+                                    🏦 Bank Transfer
+                                </label>
+                            </div>
+                            
+                            <div id="card-details" style="margin-top: 1rem;">
+                                <div class="form-group">
+                                    <label for="cardNumber">Card Number</label>
+                                    <input type="text" id="cardNumber" class="form-control" placeholder="1234 5678 9012 3456">
+                                </div>
+                                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                                    <div class="form-group">
+                                        <label for="expiry">Expiry Date</label>
+                                        <input type="text" id="expiry" class="form-control" placeholder="MM/YY">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="cvv">CVV</label>
+                                        <input type="text" id="cvv" class="form-control" placeholder="123">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Promo Code -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 style="margin-bottom: 1rem;">Discount Code</h2>
+                            <div style="display: flex; gap: 1rem;">
+                                <input type="text" id="promo-code" class="form-control" placeholder="Enter promo code">
+                                <button class="btn btn-secondary" onclick="applyPromoCode()">Apply</button>
+                            </div>
+                            <div id="promo-message" style="margin-top: 0.5rem;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Summary -->
+                <div class="order-summary">
+                    <h2 style="margin-bottom: 1rem;">Order Summary</h2>
+                    <div id="order-items" style="margin-bottom: 1rem;"></div>
+                    <hr>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Subtotal</span>
+                        <span id="subtotal">$0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Discount</span>
+                        <span id="discount" style="color: var(--success-color);">-$0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Shipping</span>
+                        <span id="shipping">$9.99</span>
+                    </div>
+                    <hr>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: bold; font-size: 1.25rem;">
+                        <span>Total</span>
+                        <span id="total" style="color: var(--primary-color);">$0.00</span>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="placeOrder()" style="width: 100%;">Place Order</button>
+                    <a href="cart.html" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem; display: block; text-align: center;">Back to Cart</a>
+                    
+                    <div id="error-message" class="error-message" style="display: none; margin-top: 1rem;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About HersStep</h3>
+                <p>Your destination for stylish and comfortable women's footwear.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <ul>
+                    <li>📧 support@hersstep.com</li>
+                    <li>📞 1-800-HERSTEP</li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        let discountAmount = 0;
+        
+        function renderOrderSummary() {
+            const itemsContainer = document.getElementById('order-items');
+            itemsContainer.innerHTML = store.cart.map(item => `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                    <span>${item.name} x${item.quantity}</span>
+                    <span>${formatCurrency(item.price * item.quantity)}</span>
+                </div>
+            `).join('');
+            
+            const subtotal = cart.getTotal();
+            const shipping = subtotal >= 100 ? 0 : 9.99;
+            const total = subtotal - discountAmount + shipping;
+            
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('discount').textContent = '-$' + discountAmount.toFixed(2);
+            document.getElementById('shipping').textContent = shipping === 0 ? 'FREE' : formatCurrency(shipping);
+            document.getElementById('total').textContent = formatCurrency(total);
+            
+            return total;
+        }
+        
+        function applyPromoCode() {
+            const code = document.getElementById('promo-code').value.trim().toUpperCase();
+            const messageEl = document.getElementById('promo-message');
+            
+            if (store.promoCodes[code]) {
+                const promo = store.promoCodes[code];
+                const subtotal = cart.getTotal();
+                
+                if (promo.type === 'percent') {
+                    discountAmount = subtotal * (promo.value / 100);
+                } else {
+                    discountAmount = promo.value;
+                }
+                
+                messageEl.innerHTML = `<span style="color: var(--success-color);">✓ Code applied! ${promo.value}% off</span>`;
+                renderOrderSummary();
+            } else {
+                discountAmount = 0;
+                messageEl.innerHTML = `<span class="error-message">Invalid promo code</span>`;
+                renderOrderSummary();
+            }
+        }
+        
+        function placeOrder() {
+            const errorEl = document.getElementById('error-message');
+            errorEl.style.display = 'none';
+            
+            // Validate shipping info
+            const fullName = document.getElementById('fullName').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const city = document.getElementById('city').value.trim();
+            const zipCode = document.getElementById('zipCode').value.trim();
+            
+            if (!fullName || !address || !city || !zipCode) {
+                errorEl.textContent = 'Please fill in all shipping information';
+                errorEl.style.display = 'block';
+                return;
+            }
+            
+            if (!store.currentUser) {
+                errorEl.textContent = 'Please login to place an order';
+                errorEl.style.display = 'block';
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return;
+            }
+            
+            if (store.cart.length === 0) {
+                errorEl.textContent = 'Your cart is empty';
+                errorEl.style.display = 'block';
+                return;
+            }
+            
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            const subtotal = cart.getTotal();
+            const shipping = subtotal >= 100 ? 0 : 9.99;
+            const total = subtotal - discountAmount + shipping;
+            
+            // Simulate payment processing
+            const orderData = {
+                total,
+                discount: discountAmount,
+                paymentMethod,
+                shippingAddress: {
+                    fullName,
+                    address,
+                    city,
+                    zipCode
+                }
+            };
+            
+            try {
+                const newOrder = orders.place(orderData);
+                showNotification('Order placed successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'order-confirmation.html?orderId=' + newOrder.id;
+                }, 1000);
+            } catch (error) {
+                errorEl.textContent = error.message;
+                errorEl.style.display = 'block';
+            }
+        }
+        
+        // Payment method change handler
+        document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const cardDetails = document.getElementById('card-details');
+                cardDetails.style.display = this.value === 'credit' ? 'block' : 'none';
+            });
+        });
+        
+        // Initialize
+        renderOrderSummary();
+    </script>
+</body>
+</html>

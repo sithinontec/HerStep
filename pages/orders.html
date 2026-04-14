@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - HersStep</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="top-bar">
+            <span>Free shipping on orders over $100</span>
+            <span>Contact: support@hersstep.com</span>
+        </div>
+        <nav class="nav-container">
+            <a href="../index.html" class="logo">HersStep</a>
+            <ul class="nav-menu">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="products.html">Shop</a></li>
+                <li class="auth-links"></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <h1 style="margin-bottom: 2rem;">My Orders</h1>
+            
+            <div id="orders-container">
+                <!-- Orders loaded dynamically -->
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About HersStep</h3>
+                <p>Your destination for stylish and comfortable women's footwear.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <ul>
+                    <li>📧 support@hersstep.com</li>
+                    <li>📞 1-800-HERSTEP</li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        function renderOrders() {
+            const container = document.getElementById('orders-container');
+            
+            if (!store.currentUser) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 3rem;">
+                        <h2>Please login to view your orders</h2>
+                        <a href="login.html" class="btn btn-primary">Login</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            const userOrders = orders.getUserOrders();
+            
+            if (userOrders.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 3rem;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">📦</div>
+                        <h2>No orders yet</h2>
+                        <p style="color: var(--text-light); margin-bottom: 2rem;">Start shopping to see your orders here!</p>
+                        <a href="products.html" class="btn btn-primary">Start Shopping</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = userOrders.map(order => `
+                <div class="card" style="margin-bottom: 1rem;">
+                    <div class="card-body">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin-bottom: 0.25rem;">Order ${order.id}</h3>
+                                <p style="color: var(--text-light);">${new Date(order.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary-color); margin-bottom: 0.5rem;">
+                                    ${formatCurrency(order.total)}
+                                </div>
+                                <span style="padding: 0.25rem 0.75rem; background: ${getStatusColor(order.status)}; color: white; border-radius: 20px; font-size: 0.875rem;">
+                                    ${order.status.toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+                        <hr style="margin: 1rem 0;">
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                            <div>
+                                <strong>Items:</strong>
+                                <ul style="margin-top: 0.5rem;">
+                                    ${order.items.map(item => `<li>${item.name} x${item.quantity}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div>
+                                <strong>Shipping Address:</strong>
+                                <p style="margin-top: 0.5rem; color: var(--text-light);">
+                                    ${order.shippingAddress.fullName}<br>
+                                    ${order.shippingAddress.address}<br>
+                                    ${order.shippingAddress.city}, ${order.shippingAddress.zipCode}
+                                </p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                            <button class="btn btn-secondary" onclick="viewOrderDetails('${order.id}')">View Details</button>
+                            ${order.status === 'placed' ? `<button class="btn btn-danger" onclick="cancelOrder('${order.id}')">Cancel Order</button>` : ''}
+                            <button class="btn btn-secondary" onclick="contactSupport('${order.id}')">Contact Support</button>
+                            ${order.status === 'delivered' ? `<button class="btn btn-secondary" onclick="requestReturn('${order.id}')">Return/Refund</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function getStatusColor(status) {
+            const colors = {
+                'placed': 'var(--primary-color)',
+                'processing': 'var(--warning-color)',
+                'shipped': '#2196f3',
+                'delivered': 'var(--success-color)',
+                'cancelled': 'var(--error-color)'
+            };
+            return colors[status] || 'var(--text-light)';
+        }
+        
+        function viewOrderDetails(orderId) {
+            window.location.href = 'order-details.html?orderId=' + orderId;
+        }
+        
+        function cancelOrder(orderId) {
+            if (confirm('Are you sure you want to cancel this order?')) {
+                orders.cancel(orderId);
+                showNotification('Order cancelled successfully', 'success');
+                renderOrders();
+            }
+        }
+        
+        function contactSupport(orderId) {
+            const message = prompt('Enter your message to support:');
+            if (message) {
+                showNotification('Message sent to support!', 'success');
+            }
+        }
+        
+        function requestReturn(orderId) {
+            const reason = prompt('Please enter the reason for return:');
+            if (reason) {
+                showNotification('Return request submitted!', 'success');
+            }
+        }
+        
+        renderOrders();
+    </script>
+</body>
+</html>
