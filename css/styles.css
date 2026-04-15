@@ -156,6 +156,18 @@ main {
     color: var(--white);
 }
 
+.btn-sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    background-color: var(--secondary-color);
+    color: var(--text-dark);
+}
+
+.btn-sm:hover {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
 /* Forms */
 .form-group {
     margin-bottom: 1.5rem;
