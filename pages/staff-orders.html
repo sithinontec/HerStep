@@ -5,6 +5,35 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Orders - HerStep (Staff)</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        /* Styled status badge and select for staff orders */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #fff;
+            text-transform: capitalize;
+            min-width: 70px;
+            text-align: center;
+        }
+        .status-placed { background: #1976d2; }
+        .status-processing { background: #fb8c00; }
+        .status-shipped { background: #0288d1; }
+        .status-delivered { background: #2e7d32; }
+        .status-cancelled { background: #c62828; }
+
+        .status-select {
+            padding: 0.35rem 0.5rem;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background: #fff;
+            font-weight: 600;
+            color: #333;
+        }
+        .order-row-controls { display:flex; align-items:center; gap:0.5rem; }
+    </style>
 </head>
 <body>
     <header>
@@ -29,6 +58,17 @@
             <h1>All Orders</h1>
             <div class="card">
                 <div class="card-body">
+                    <div style="display:flex; gap:0.5rem; margin-bottom:1rem; align-items:center;">
+                        <input id="orders-search" class="form-control" placeholder="Search orders by id, customer, or item..." style="min-width:200px;">
+                        <select id="orders-status-filter" class="form-control" style="min-width:150px;">
+                            <option value="">All Statuses</option>
+                            <option value="placed">Placed</option>
+                            <option value="processing">Processing</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
                     <div id="orders-list">Loading orders...</div>
                 </div>
             </div>
@@ -51,21 +91,35 @@
 
         const list = document.getElementById('orders-list');
 
-        // Render orders from store.orders
+        // Render orders from store.orders with search & status filtering
         function renderOrders() {
             if (!list) return;
-            const arr = (store.orders || []).slice().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+            const raw = (store.orders || []).slice();
+            // Apply filters
+            const searchVal = (document.getElementById('orders-search')?.value || '').trim().toLowerCase();
+            const statusFilter = (document.getElementById('orders-status-filter')?.value || '');
+
+            let arr = raw.filter(o => {
+                if (statusFilter && String(o.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
+                if (!searchVal) return true;
+                // Match id, order_number, user email/name, item names
+                const idMatch = String(o.id || '').toLowerCase().includes(searchVal) || String(o.order_number || '').toLowerCase().includes(searchVal);
+                const userMatch = (o.userEmail || o.user?.email || '').toLowerCase().includes(searchVal) || ((o.userFirstName || o.user?.firstName || '') + ' ' + (o.userLastName || o.user?.lastName || '')).toLowerCase().includes(searchVal);
+                const itemsMatch = Array.isArray(o.items) && o.items.some(it => (it.name || '').toLowerCase().includes(searchVal));
+                return idMatch || userMatch || itemsMatch;
+            }).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
             if (arr.length === 0) {
                 list.textContent = 'No orders yet.';
                 return;
             }
 
-            list.innerHTML = arr.map(o => `
-                <div style="border-bottom:1px solid #eee; padding:0.5rem 0;">
+                    list.innerHTML = arr.map(o => `
+                <div class="order-row" style="border-bottom:1px solid #eee; padding:0.5rem 0;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div><strong>${o.id}</strong> — ${o.createdAt ? new Date(o.createdAt).toLocaleString() : '—'}</div>
-                        <div>
-                            <select onchange="changeOrderStatus('${o.id}', this.value)">
+                        <div class="order-row-controls">
+                            <span class="status-badge status-${o.status}">${o.status}</span>
+                            <select class="status-select" onchange="changeOrderStatus('${o.id}', this.value)">
                                 <option value="placed" ${o.status==='placed' ? 'selected' : ''}>Placed</option>
                                 <option value="processing" ${o.status==='processing' ? 'selected' : ''}>Processing</option>
                                 <option value="shipped" ${o.status==='shipped' ? 'selected' : ''}>Shipped</option>
@@ -105,6 +159,10 @@
                 }
             }
         }
+
+        // Wire up search & filter inputs
+        document.getElementById('orders-search')?.addEventListener('input', renderOrders);
+        document.getElementById('orders-status-filter')?.addEventListener('change', renderOrders);
 
         // Save current store.orders array to API (PUT /api/orders)
         async function saveOrdersToApi() {
