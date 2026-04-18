@@ -2,211 +2,111 @@
 // HersStep - Main Application Data & State
 // ========================================
 
-// Mock Data Store
+// 1. GLOBAL STATE DEFINITION
 const store = {
-    products: [
-        {
-            id: 1,
-            name: 'Classic Red Heels',
-            category: 'Heels',
-            price: 89.99,
-            description: 'Elegant red heels perfect for special occasions',
-            rating: 4.5,
-            stock: 15,
-            image: '👠'
-        },
-        {
-            id: 2,
-            name: 'Comfortable Flats',
-            category: 'Flats',
-            price: 59.99,
-            description: 'All-day comfort with stylish design',
-            rating: 4.3,
-            stock: 25,
-            image: '🥿'
-        },
-        {
-            id: 3,
-            name: 'Sporty Sneakers',
-            category: 'Sneakers',
-            price: 79.99,
-            description: 'Perfect blend of style and comfort',
-            rating: 4.7,
-            stock: 30,
-            image: '👟'
-        },
-        {
-            id: 4,
-            name: 'Elegant Sandals',
-            category: 'Sandals',
-            price: 69.99,
-            description: 'Summer-ready elegant sandals',
-            rating: 4.2,
-            stock: 20,
-            image: '👡'
-        },
-        {
-            id: 5,
-            name: 'Professional Pumps',
-            category: 'Heels',
-            price: 99.99,
-            description: 'Classic pumps for the modern professional',
-            rating: 4.6,
-            stock: 12,
-            image: '👠'
-        },
-        {
-            id: 6,
-            name: 'Casual Loafers',
-            category: 'Flats',
-            price: 64.99,
-            description: 'Effortless style for everyday wear',
-            rating: 4.4,
-            stock: 18,
-            image: '🥿'
-        }
-    ],
-    users: [
-        {
-            id: 1,
-            firstName: 'Admin',
-            lastName: 'User',
-            age: 30,
-            email: 'admin@hersstep.com',
-            phone: '+1-555-0001',
-            password: 'admin123',
-            role: 'admin',
-            active: true,
-            createdAt: new Date().toISOString()
-        },
-        {
-            id: 2,
-            firstName: 'Staff',
-            lastName: 'Member',
-            age: 25,
-            email: 'staff@hersstep.com',
-            phone: '+1-555-0002',
-            password: 'staff123',
-            role: 'staff',
-            active: true,
-            createdAt: new Date().toISOString()
-        },
-        {
-            id: 3,
-            firstName: 'John',
-            lastName: 'Doe',
-            age: 28,
-            email: 'customer@example.com',
-            phone: '+1-555-0003',
-            password: 'customer123',
-            role: 'customer',
-            active: true,
-            createdAt: new Date().toISOString()
-        }
-    ],
-    currentUser: null,
+    products: [],
     cart: [],
+    users: [],
     orders: [],
+    currentUser: null,
+    // Promo codes for testing: keys are code strings
     promoCodes: {
-        'WELCOME10': { type: 'percent', value: 10 },
-        'SAVE20': { type: 'percent', value: 20 },
-        'FLAT15': { type: 'fixed', value: 15 },
-        'TEST50': { type: 'percent', value: 50 }
+        'SAVE10': { type: 'percent', value: 10 },   // 10% off
+        'WELCOME20': { type: 'percent', value: 20 }, // 20% off
+        'FIVEOFF': { type: 'fixed', value: 5 }       // $5 off
     }
 };
 
-// User Management
-const auth = {
-    register: function(firstName, lastName, age, email, phone, password, role = 'customer') {
-        // Check for duplicate email or phone
-        const existingUser = store.users.find(u => 
-            u.email === email || (phone && u.phone === phone)
-        );
-        
-        if (existingUser) {
-            throw new Error('Account with this email/phone number already exists');
-        }
-        
-        const newUser = {
-            id: store.users.length + 1,
-            firstName,
-            lastName,
-            age,
-            email,
-            phone,
-            password, // In production, this would be hashed
-            role,
-            createdAt: new Date().toISOString()
+// Robust Response.json patch to avoid parse errors on empty bodies
+(function() {
+    if (typeof Response !== 'undefined' && Response.prototype && !Response.prototype._safeJsonPatched) {
+        Response.prototype._safeJsonPatched = true;
+        const origJson = Response.prototype.json;
+        Response.prototype.json = async function() {
+            try {
+                const clone = this.clone();
+                const txt = await clone.text();
+                if (!txt) return null;
+                return JSON.parse(txt);
+            } catch (e) {
+                try { return await origJson.call(this); } catch (_) { return null; }
+            }
         };
-        
-        store.users.push(newUser);
-        store.currentUser = newUser;
+    }
+})();
+
+// Helper for error extraction
+function extractError(data, fallback) {
+    if (data && typeof data === 'object') {
+        if (typeof data.error === 'string' && data.error) return data.error;
+        if (typeof data.message === 'string' && data.message) return data.message;
+    }
+    return fallback || 'Request failed';
+}
+
+// FIX 1: formatCurrency was used in index.html but never defined
+function formatCurrency(amount) {
+    return '$' + Number(amount).toFixed(2);
+}
+
+// 2. USER MANAGEMENT
+const auth = {
+    register: async function(firstName, lastName, age, email, phone, password, role = 'customer') {
+        const payload = { firstName, lastName, age, email, phone, password, role };
+        const res = await fetch((window.API_BASE || '') + '/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(extractError(data, 'Registration failed'));
+        store.currentUser = data;
         this.saveSession();
-        return newUser;
+        return data;
     },
-    
-    login: function(email, password) {
-        const user = store.users.find(u => u.email === email && u.password === password);
-        
-        if (!user) {
-            throw new Error('Invalid email or password');
-        }
-        
-        store.currentUser = user;
+
+    login: async function(email, password) {
+        const emailClean = String(email || '').trim().toLowerCase();
+        const passClean = String(password || '');
+
+        const res = await fetch((window.API_BASE || '') + '/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: emailClean, password: passClean })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(extractError(data, 'Invalid email or password'));
+
+        store.currentUser = data;
         this.saveSession();
-        return user;
+        return data;
     },
-    
+
     logout: function() {
         store.currentUser = null;
         localStorage.removeItem('hersstep_currentUser');
         window.location.href = 'index.html';
     },
-    
+
     saveSession: function() {
         if (store.currentUser) {
             localStorage.setItem('hersstep_currentUser', JSON.stringify(store.currentUser));
         }
     },
-    
+
     loadSession: function() {
         const saved = localStorage.getItem('hersstep_currentUser');
         if (saved) {
-            try {
-                store.currentUser = JSON.parse(saved);
-            } catch (e) {
-                // ignore parse errors
-            }
+            try { store.currentUser = JSON.parse(saved); } catch (e) {}
         }
-    },
-    
-    updateProfile: function(updates) {
-        if (!store.currentUser) return false;
-        
-        const userIndex = store.users.findIndex(u => u.id === store.currentUser.id);
-        if (userIndex === -1) return false;
-        
-        store.users[userIndex] = { ...store.users[userIndex], ...updates };
-        store.currentUser = store.users[userIndex];
-        this.saveSession();
-        return true;
-    },
-    
-    resetPassword: function(email) {
-        const user = store.users.find(u => u.email === email);
-        if (!user) {
-            throw new Error('No account found with this email');
-        }
-        // In production, this would send an email
-        return true;
     }
 };
 
-// Cart Management
+// 3. CART MANAGEMENT
 const cart = {
     add: function(product, quantity = 1) {
         const existingItem = store.cart.find(item => item.id === product.id);
-        
         if (existingItem) {
             existingItem.quantity += quantity;
         } else {
@@ -219,363 +119,405 @@ const cart = {
                 stock: product.stock
             });
         }
-        
         this.saveCart();
         updateCartCount();
     },
-    
+
+    saveCart: function() {
+        localStorage.setItem('hersstep_cart', JSON.stringify(store.cart));
+    },
+
+    // Inside your cart object in app.js
+    loadCart: function() {
+    const saved = localStorage.getItem('hersstep_cart'); // Ensure this key is consistent
+    if (saved) {
+        try { 
+            store.cart = JSON.parse(saved); 
+        } catch (e) { 
+            store.cart = []; 
+        }
+    }
+    },
+
+    getItemCount: function() {
+        return store.cart.reduce((count, item) => count + item.quantity, 0);
+    },
+
+    // FIX: getTotal was called in cart.html but never existed
+    getTotal: function() {
+    return store.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    },
+
+    // FIX: remove was called in cart.html but never existed
     remove: function(productId) {
         store.cart = store.cart.filter(item => item.id !== productId);
         this.saveCart();
         updateCartCount();
     },
-    
-    updateQuantity: function(productId, quantity) {
-        const item = store.cart.find(item => item.id === productId);
+
+    // FIX: updateQuantity was called in cart.html but never existed
+    updateQuantity: function(productId, newQuantity) {
+        if (newQuantity <= 0) {
+            // Remove the item entirely if quantity drops to 0 or below
+            this.remove(productId);
+            return;
+        }
+        const item = store.cart.find(i => i.id === productId);
         if (item) {
-            if (quantity <= 0) {
-                this.remove(productId);
-            } else {
-                item.quantity = quantity;
-                this.saveCart();
-            }
+            item.quantity = newQuantity;
+            this.saveCart();
             updateCartCount();
         }
     },
-    
+
     clear: function() {
         store.cart = [];
         this.saveCart();
         updateCartCount();
-    },
-    
-    getTotal: function() {
-        return store.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-    },
-    
-    getItemCount: function() {
-        return store.cart.reduce((count, item) => count + item.quantity, 0);
-    },
-    
-    saveCart: function() {
-        localStorage.setItem('hersstep_cart', JSON.stringify(store.cart));
-    },
-    
-    loadCart: function() {
-        const saved = localStorage.getItem('hersstep_cart');
-        if (saved) {
-            try {
-                store.cart = JSON.parse(saved);
-            } catch (e) {
-                store.cart = [];
-            }
-        }
-        updateCartCount();
     }
 };
 
-// Order Management
-const orders = {
-    place: function(orderData) {
-        const newOrder = {
-            id: 'ORD-' + Date.now(),
-            userId: store.currentUser.id,
-            items: [...store.cart],
-            total: orderData.total,
-            discount: orderData.discount || 0,
-            paymentMethod: orderData.paymentMethod,
-            status: 'placed',
-            shippingAddress: orderData.shippingAddress,
-            createdAt: new Date().toISOString()
-        };
-        
-        // Update stock
-        newOrder.items.forEach(item => {
-            const product = store.products.find(p => p.id === item.id);
-            if (product) {
-                product.stock -= item.quantity;
-            }
-        });
-        // persist updated product stock
-        if (typeof products !== 'undefined' && typeof products.saveProducts === 'function') {
-            products.saveProducts();
-        }
-
-        store.orders.push(newOrder);
-        // persist orders so confirmation page can read them after redirect
-        if (typeof this.saveOrders === 'function') this.saveOrders();
-        cart.clear();
-        return newOrder;
-    },
-    
-    getUserOrders: function() {
-        if (!store.currentUser) return [];
-        return store.orders.filter(o => o.userId === store.currentUser.id);
-    },
-    
-    getAllOrders: function() {
-        return store.orders;
-    },
-    
-    updateStatus: function(orderId, status) {
-        const order = store.orders.find(o => o.id === orderId);
-        if (order) {
-            order.status = status;
-            if (typeof this.saveOrders === 'function') this.saveOrders();
-            return true;
-        }
-        return false;
-    },
-    
-    cancel: function(orderId) {
-        const order = store.orders.find(o => o.id === orderId);
-        if (order && order.status === 'placed') {
-            order.status = 'cancelled';
-            // Restore stock
-            order.items.forEach(item => {
-                const product = store.products.find(p => p.id === item.id);
-                if (product) {
-                    product.stock += item.quantity;
-                }
-            });
-            if (typeof this.saveOrders === 'function') this.saveOrders();
-            return true;
-        }
-        return false;
-    }
-    ,
-    saveOrders: function() {
-        try {
-            localStorage.setItem('hersstep_orders', JSON.stringify(store.orders));
-        } catch (e) {
-            // ignore storage errors
-        }
-    },
-    loadOrders: function() {
-        try {
-            const saved = localStorage.getItem('hersstep_orders');
-            if (saved) {
-                store.orders = JSON.parse(saved);
-            } else {
-                store.orders = [];
-            }
-        } catch (e) {
-            store.orders = [];
-        }
-    }
-};
-
-// Product Management (Staff)
+// 4. PRODUCT MANAGEMENT
+// Products service with localStorage-backed CRUD for staff pages and a
+// network loader used by public pages. Provides helpers used by staff-products.html.
 const products = {
-    getAll: function() {
-        return store.products;
+    // Always load products from the server database API
+    loadProducts: function() {
+        return fetch((window.API_BASE || '') + '/api/products')
+            .then(async r => {
+                if (!r.ok) throw new Error('Failed to fetch products from API');
+                const data = await r.json();
+                if (Array.isArray(data)) {
+                    window.store.products = data;
+                    if (typeof window.renderProducts === 'function') window.renderProducts();
+                }
+                return data;
+            })
+            .catch(err => {
+                console.error('products.loadProducts error:', err);
+                // Keep store.products unchanged on error and rethrow
+                throw err;
+            });
     },
-
+    storageKey: 'hersstep_products',
+    loadFromStorage: function() {
+        const raw = localStorage.getItem(this.storageKey);
+        if (raw) {
+            try { store.products = JSON.parse(raw); } catch (e) { store.products = []; }
+        } else {
+            store.products = store.products || [];
+        }
+    },
+    saveProducts: function() {
+        localStorage.setItem(this.storageKey, JSON.stringify(store.products || []));
+    },
     getById: function(id) {
-        return store.products.find(p => p.id === Number(id));
+        return (store.products || []).find(p => Number(p.id) === Number(id));
     },
-
-    add: function(productData) {
-        const nextId = store.products.reduce((m, p) => Math.max(m, Number(p.id) || 0), 0) + 1;
-        // Price: parse, clamp to >=0 and round to 2 decimals
-        const rawPrice = parseFloat(productData.price);
-        const priceVal = isNaN(rawPrice) ? 0 : Math.max(0, Math.round(rawPrice * 100) / 100);
-        // Stock: integer >= 0
-        const rawStock = parseInt(productData.stock, 10);
-        const stockVal = isNaN(rawStock) ? 0 : Math.max(0, rawStock);
-        // Rating: clamp to [0,5] and round to 1 decimal
-        const rawRating = (productData.rating !== undefined && productData.rating !== null && productData.rating !== '') ? parseFloat(productData.rating) : 0;
-        const ratingVal = isNaN(rawRating) ? 0 : Math.round(Math.max(0, Math.min(5, rawRating)) * 10) / 10;
-
-        const newProduct = {
-            id: nextId,
-            name: productData.name || 'Untitled',
-            category: productData.category || 'Uncategorized',
-            price: priceVal,
-            description: productData.description || '',
-            rating: ratingVal,
-            stock: stockVal,
-            image: productData.image || '👟'
-        };
-        store.products.push(newProduct);
-        if (typeof this.saveProducts === 'function') this.saveProducts();
-        return newProduct;
-    },
-
-    update: function(id, updates) {
-        const product = store.products.find(p => p.id === Number(id));
-        if (product) {
-            if (updates.price !== undefined) {
-                const rp = parseFloat(updates.price);
-                updates.price = isNaN(rp) ? 0 : Math.max(0, Math.round(rp * 100) / 100);
-            }
-            if (updates.stock !== undefined) {
-                const rs = parseInt(updates.stock, 10);
-                updates.stock = isNaN(rs) ? 0 : Math.max(0, rs);
-            }
-            if (updates.rating !== undefined) {
-                const rv = parseFloat(updates.rating);
-                const rvClamped = isNaN(rv) ? 0 : Math.max(0, Math.min(5, rv));
-                updates.rating = Math.round(rvClamped * 10) / 10;
-            }
-            Object.assign(product, updates);
-            if (typeof this.saveProducts === 'function') this.saveProducts();
-            return true;
-        }
-        return false;
-    },
-
-    remove: function(id) {
-        const index = store.products.findIndex(p => p.id === Number(id));
-        if (index !== -1) {
-            store.products.splice(index, 1);
-            if (typeof this.saveProducts === 'function') this.saveProducts();
-            return true;
-        }
-        return false;
-    },
-
-    validate: function(productData, excludeId) {
+    validate: function(data, existingId) {
         const errors = [];
-
-        if (!productData.name || productData.name.trim() === '') {
-            errors.push('Product name is required');
-        }
-
-        if (!productData.category || productData.category.trim() === '') {
-            errors.push('Category is required');
-        }
-
-        // Price must be numeric and non-negative
-        if (productData.price === undefined || isNaN(Number(productData.price)) || Number(productData.price) < 0) {
-            errors.push('Price must be 0 or greater');
-        }
-
-        if (!productData.description || productData.description.trim() === '') {
-            errors.push('Description is required');
-        }
-
-        // Rating is clamped automatically on add/update; no validation error produced here.
-
-        // Stock should not be negative
-        if (productData.stock !== undefined && (isNaN(Number(productData.stock)) || Number(productData.stock) < 0)) {
-            errors.push('Stock cannot be negative');
-        }
-
-        // Check for duplicate product name (case-insensitive), excluding an optional product id
-        if (productData.name && productData.name.trim() !== '') {
-            const nameNormalized = productData.name.trim().toLowerCase();
-            const duplicate = store.products.some(p => p.name && p.name.trim().toLowerCase() === nameNormalized && Number(p.id) !== Number(excludeId));
-            if (duplicate) {
-                errors.push('Product with this name already exists');
-            }
-        }
-
+        if (!data.name || String(data.name).trim().length < 1) errors.push('Name is required');
+        if (!data.price || Number(data.price) < 0) errors.push('Price must be a non-negative number');
+        if (data.stock == null || Number(data.stock) < 0) errors.push('Stock must be 0 or greater');
         return errors;
     },
+    add: async function(productData) {
+        const errors = this.validate(productData);
+        if (errors.length) throw new Error(errors.join('; '));
+        const id = (store.products && store.products.length ? Math.max(...store.products.map(p => Number(p.id) || 0)) + 1 : 1);
+        const prod = Object.assign({ id }, productData);
+        store.products = store.products || [];
+        store.products.push(prod);
 
-    saveProducts: function() {
+        // Try to persist to API
         try {
-            localStorage.setItem('hersstep_products', JSON.stringify(store.products));
+            const res = await fetch((window.API_BASE || '') + '/api/products', {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(store.products)
+            });
+            if (!res.ok) throw new Error('API save failed');
         } catch (e) {
-            // ignore storage errors
+            // Fallback: save locally
+            this.saveProducts();
         }
+
+        return prod;
     },
+    update: async function(id, updates) {
+        const p = this.getById(id);
+        if (!p) throw new Error('Product not found');
+        const merged = Object.assign({}, p, updates);
+        const errors = this.validate(merged, id);
+        if (errors.length) throw new Error(errors.join('; '));
+        Object.assign(p, updates);
 
-    loadProducts: function() {
         try {
-            const saved = localStorage.getItem('hersstep_products');
-            if (saved) {
-                store.products = JSON.parse(saved);
-            } else {
-                // initialize storage with defaults
-                this.saveProducts();
-            }
+            const res = await fetch((window.API_BASE || '') + '/api/products', {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(store.products)
+            });
+            if (!res.ok) throw new Error('API save failed');
         } catch (e) {
-            // ignore parse errors
+            this.saveProducts();
         }
+
+        return p;
+    },
+    remove: async function(id) {
+        const before = store.products ? store.products.length : 0;
+        store.products = (store.products || []).filter(p => Number(p.id) !== Number(id));
+        try {
+            const res = await fetch((window.API_BASE || '') + '/api/products', {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(store.products)
+            });
+            if (!res.ok) throw new Error('API save failed');
+        } catch (e) {
+            this.saveProducts();
+        }
+        return store.products.length < before;
     }
 };
 
-// Initialize App
-function initApp() {
-    auth.loadSession();
-    cart.loadCart();
-    updateCartCount();
-    updateNav();
+// 5. UI HELPERS
+
+// Single source of truth for auth state — reads localStorage directly
+// so it works on every page without depending on loadSession() timing.
+function isLoggedIn() {
+    try {
+        var raw  = localStorage.getItem('hersstep_currentUser');
+        var user = raw ? JSON.parse(raw) : null;
+        return !!(user && (user.id || user.email));
+    } catch (e) { return false; }
 }
 
-// Update Cart Count Display
+// Updates the nav bar auth links on every page:
+//   logged in  → shows "Hi, Name" + Logout
+//   logged out → shows Login + Sign Up
+function updateNavAuth() {
+    var authLinks = document.querySelector('.auth-links');
+    if (!authLinks) return;
+    if (isLoggedIn()) {
+        var raw  = localStorage.getItem('hersstep_currentUser');
+        var user = JSON.parse(raw);
+        var name = (user.firstName || user.email || 'Account');
+        authLinks.innerHTML =
+            '<span style="color:var(--primary);font-weight:600;padding:0 0.5rem;">Hi, ' + name + '</span>' +
+            '<a href="#" onclick="window.auth.logout();return false;">Logout</a>';
+    } else {
+        authLinks.innerHTML =
+            '<a href="login.html">Login</a>' +
+            '<a href="signup.html">Sign Up</a>';
+    }
+}
+
 function updateCartCount() {
     const countEl = document.querySelector('.cart-count');
-    if (countEl) {
+    if (!countEl) return;
+    if (typeof cart !== 'undefined' && typeof cart.getItemCount === 'function') {
         const count = cart.getItemCount();
         countEl.textContent = count > 0 ? count : '';
         countEl.style.display = count > 0 ? 'flex' : 'none';
     }
 }
 
-// Update Navigation Based on User State
+function showNotification(message, type = 'success') {
+    const n = document.createElement('div');
+    n.className = `notification ${type}`;
+    n.textContent = message;
+    document.body.appendChild(n);
+    setTimeout(() => n.remove(), 3000);
+}
+
 function updateNav() {
-    const navContainer = document.querySelector('.nav-menu');
-    if (!navContainer) return;
+    const orderItem = document.getElementById('order-nav-item');
+    const orderLink = document.getElementById('order-nav-link');
+    const dashItem = document.getElementById('dashboard-nav-item');
     
-    const user = store.currentUser;
-    const authLinks = navContainer.querySelector('.auth-links');
-    if (authLinks) {
-        // Determine prefix depending on whether we're in /pages/ or root
-        const inPages = window.location.pathname.includes('/pages/') || window.location.href.includes('/pages/');
-        const prefix = inPages ? '' : 'pages/';
-
-        if (user) {
-            let roleLinks = '';
-            if (user.role === 'staff') {
-                roleLinks = `<a href="${prefix}staff-dashboard.html">Dashboard</a>`;
+    // NEW: Target the back button
+    const backBtn = document.getElementById('dynamic-order-btn');
+    
+    // Check if user is logged in
+    if (store.currentUser) {
+        // Navigation Bar Logic
+        if (orderItem && orderLink) {
+            orderItem.style.display = 'block';
+            if (store.currentUser.role === 'staff') {
+                orderLink.href = 'staff-orders.html';
+            } else {
+                orderLink.href = 'orders.html'; // Matches your specific link
             }
-
-            authLinks.innerHTML = `
-                <a href="${prefix}profile.html">${user.firstName}</a>
-                <a href="${prefix}orders.html">Orders</a>
-                ${roleLinks}
-                <a href="#" onclick="auth.logout(); return false;">Logout</a>
-            `;
-        } else {
-            authLinks.innerHTML = `
-                <a href="${prefix}login.html">Login</a>
-                <a href="${prefix}signup.html">Sign Up</a>
-            `;
         }
+        
+        // Dashboard Logic
+        if (dashItem) {
+            dashItem.style.display = (store.currentUser.role === 'staff') ? 'block' : 'none';
+        }
+
+        // --- NEW: Back Button Logic ---
+        if (backBtn) {
+            backBtn.href = (store.currentUser.role === 'staff') ? 'staff-orders.html' : 'orders.html';
+        }
+    } else {
+        // If not logged in, hide items
+        if (orderItem) orderItem.style.display = 'none';
+        if (dashItem) dashItem.style.display = 'none';
     }
 }
 
-// Show Notification
-function showNotification(message, type = 'success') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
+// 6. EXPOSE TO WINDOW FOR GLOBAL ACCESS
+window.store = store;
+window.auth = auth;
+window.products = products;
+window.cart = cart;
+window.showNotification = showNotification;
+window.formatCurrency = formatCurrency;
+window.isLoggedIn = isLoggedIn;
+window.updateNavAuth = updateNavAuth;
+// Orders service: simple localStorage-backed implementation used by payment simulator
+const orders = {
+    load: function() {
+        // Keep orders in-memory by default. If a server API exists, try fetching.
+        store.orders = store.orders || [];
+    },
+    save: async function() {
+        // Attempt to persist to server if API endpoint exists; otherwise do nothing (no localStorage)
+        if (!store.orders) store.orders = [];
+        try {
+            const res = await fetch((window.API_BASE || '') + '/api/orders', {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(store.orders)
+            });
+            if (!res.ok) throw new Error('API save failed');
+        } catch (e) {
+            // Intentionally do not fall back to localStorage — orders persistence disabled
+        }
+    },
+    // Promise-based loader to match pages expecting async
+    loadOrders: async function() {
+        // Prefer fetching from API if available
+        try {
+            const r = await fetch((window.API_BASE || '') + '/api/orders');
+            if (r.ok) {
+                const data = await r.json();
+                store.orders = Array.isArray(data) ? data : [];
+                return store.orders;
+            }
+        } catch (e) {
+            // ignore network errors and keep in-memory orders
+        }
+        this.load();
+        return Promise.resolve(store.orders);
+    },
+    getUserOrders: function() {
+        if (!store.currentUser) return [];
+        const uid = String(store.currentUser.id || store.currentUser.email);
+        return (store.orders || []).filter(o => {
+            const oid = o.userId != null ? String(o.userId) : (o.userEmail || '');
+            return oid === uid;
+        });
+    },
+    cancel: async function(orderId) {
+        const ord = (store.orders || []).find(o => String(o.id) === String(orderId) || String(o.orderNumber) === String(orderId));
+        if (!ord) return false;
+        if (ord.status === 'cancelled') return true;
+        // Restore stock for items if possible
+        if (Array.isArray(ord.items)) {
+            ord.items.forEach(it => {
+                try {
+                    const prod = products.getById(it.id);
+                    if (prod) {
+                        prod.stock = (Number(prod.stock) || 0) + (Number(it.quantity) || 0);
+                    }
+                } catch (e) {}
+            });
+            // persist product changes
+            products.saveProducts();
+        }
 
-// Format Currency
-function formatCurrency(amount) {
-    return '$' + amount.toFixed(2);
-}
+        // Try to persist cancellation to server
+        try {
+            const r = await fetch((window.API_BASE || '') + '/api/orders/' + encodeURIComponent(ord.id), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'cancelled' }) });
+            if (r.ok) {
+                try { const data = await r.json(); if (data && data.status) ord.status = data.status; else ord.status = 'cancelled'; } catch (e) { ord.status = 'cancelled'; }
+                try { await this.save(); } catch (e) {}
+                return true;
+            }
+        } catch (e) {
+            // ignore and fallback
+        }
 
-// Preload session and cart immediately so inline page scripts can read store state
+        // Fallback to local update
+        ord.status = 'cancelled';
+        try { await this.save(); } catch (e) {}
+        return true;
+    },
+    updateStatus: function(orderId, status) {
+        const ord = (store.orders || []).find(o => String(o.id) === String(orderId) || String(o.orderNumber) === String(orderId));
+        if (!ord) return false;
+        // Try server PATCH first
+        return (async () => {
+            try {
+                const r = await fetch((window.API_BASE || '') + '/api/orders/' + encodeURIComponent(ord.id), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+                if (r.ok) {
+                    try { const data = await r.json(); if (data && data.status) ord.status = data.status; else ord.status = status; } catch (e) { ord.status = status; }
+                    return true;
+                }
+            } catch (e) {}
+            ord.status = status;
+            try { await this.save(); } catch (e) {}
+            return true;
+        })();
+    },
+    place: async function(pending) {
+        // Simulate network delay
+        await new Promise(r => setTimeout(r, 150));
+        const id = 'ORD-' + Date.now();
+        const order = Object.assign({ id, createdAt: new Date().toISOString() }, pending);
+        // Attach user identity if available
+        if (store.currentUser) {
+            order.userId = store.currentUser.id || store.currentUser.email;
+            order.userEmail = store.currentUser.email || null;
+        }
+        // Default status and total
+        order.status = order.status || 'placed';
+        order.total = order.total || (cart.getTotal() - (order.discount || 0) + (cart.getTotal() >= 100 ? 0 : 9.99));
+        // Ensure cart snapshot
+        order.items = Array.isArray(store.cart) ? JSON.parse(JSON.stringify(store.cart)) : [];
+        store.orders = store.orders || [];
+        // Try to POST to server API first
+        try {
+            const r = await fetch((window.API_BASE || '') + '/api/orders', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order)
+            });
+            if (r.ok) {
+                const created = await r.json();
+                store.orders.push(created);
+                // Refresh products to reflect updated stock
+                try { await products.loadProducts(); } catch (e) {}
+                // Clear cart after successful order
+                cart.clear();
+                return created;
+            }
+        } catch (e) {
+            // ignore and fallback to in-memory
+        }
+
+        // Fallback: keep in-memory order (no localStorage)
+        store.orders.push(order);
+        try { await this.save(); } catch (e) {}
+        cart.clear();
+        return order;
+    }
+};
+orders.load();
+window.orders = orders;
+window.cart.loadCart();
+if (typeof updateCartCount === 'function') updateCartCount();
+
+// Run startup tasks
 auth.loadSession();
-// Load persisted products (if any)
-if (typeof products !== 'undefined' && typeof products.loadProducts === 'function') products.loadProducts();
 cart.loadCart();
-orders.loadOrders();
-updateCartCount();
+updateNavAuth();        // update nav on every page immediately
+products.loadProducts();
 
-// Initialize on DOM Load (run immediately if document already parsed)
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
-} else {
-    initApp();
-}
+document.addEventListener('DOMContentLoaded', updateNav);
+setTimeout(() => {
+    updateNav();
+}, 100);

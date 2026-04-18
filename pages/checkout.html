@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - HersStep</title>
+    <title>Checkout - HerStep</title>
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
     <header>
         <div class="top-bar">
             <span>Free shipping on orders over $100</span>
-            <span>Contact: support@hersstep.com</span>
+            <span>Contact: support@herstep.com</span>
         </div>
         <nav class="nav-container">
-            <a href="index.html" class="logo">HersStep</a>
+            <a href="index.html" class="logo">HerStep</a>
             <ul class="nav-menu">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="products.html">Shop</a></li>
+                <li id="order-nav-item"><a href="#" id="order-nav-link">Order</a></li>
+                <li id="dashboard-nav-item" style="display: none;"><a href="staff-dashboard.html">Dashboard</a></li>
                 <li class="auth-links"></li>
             </ul>
         </nav>
@@ -27,7 +29,7 @@
             <h1 style="margin-bottom: 2rem;">Checkout</h1>
             
             <div class="checkout-grid">
-                <div>
+                <div class="left-column">
                     <!-- Shipping Information -->
                     <div class="card" style="margin-bottom: 2rem;">
                         <div class="card-body">
@@ -48,7 +50,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="zipCode">ZIP Code *</label>
-                                        <input type="text" id="zipCode" class="form-control" required>
+                                        <input type="number" id="zipCode" class="form-control" min="0" required>
                                     </div>
                                 </div>
                             </form>
@@ -101,45 +103,52 @@
                         <div class="card-body">
                             <h2 style="margin-bottom: 1rem;">Payment Method</h2>
                             <div class="form-group">
-                                <label>
-                                    <input type="radio" name="paymentMethod" value="credit" checked> 
-                                    💳 Credit/Debit Card
-                                </label>
+                                <label><input type="radio" name="paymentMethod" value="credit" checked> 💳 Credit/Debit Card</label>
                             </div>
                             <div class="form-group">
-                                <label>
-                                    <input type="radio" name="paymentMethod" value="paypal"> 
-                                    🅿️ PayPal
-                                </label>
+                                <label><input type="radio" name="paymentMethod" value="paypal"> 🅿️ PayPal</label>
                             </div>
                             <div class="form-group">
-                                <label>
-                                    <input type="radio" name="paymentMethod" value="bank"> 
-                                    🏦 Bank Transfer
-                                </label>
+                                <label><input type="radio" name="paymentMethod" value="bank"> 🏦 Bank Transfer</label>
                             </div>
-                            
-                            <div id="card-details" style="margin-top: 1rem;">
+
+                            <div id="credit-details" class="payment-fields">
                                 <div class="form-group">
-                                    <label for="cardNumber">Card Number</label>
+                                    <label for="cardNumber">Card Number *</label>
                                     <input type="text" id="cardNumber" class="form-control" placeholder="1234 5678 9012 3456">
                                 </div>
                                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
-                                    <div class="form-group">
-                                        <label for="expiry">Expiry Date</label>
-                                        <input type="text" id="expiry" class="form-control" placeholder="MM/YY">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="cvv">CVV</label>
-                                        <input type="text" id="cvv" class="form-control" placeholder="123">
-                                    </div>
+                                    <div class="form-group"><label for="expiry">Expiry Date *</label><input type="text" id="expiry" class="form-control" placeholder="MM/YY"></div>
+                                    <div class="form-group"><label for="cvv">CVV *</label><input type="text" id="cvv" class="form-control" placeholder="123"></div>
+                                </div>
+                            </div>
+
+                            <div id="paypal-details" class="payment-fields" style="display: none;">
+                                <div class="form-group">
+                                    <label for="paypalEmail">PayPal Email *</label>
+                                    <input type="email" id="paypalEmail" class="form-control" placeholder="email@example.com">
+                                </div>
+                            </div>
+
+                            <div id="bank-details" class="payment-fields" style="display: none;">
+                                <div class="form-group">
+                                    <label for="accountName">Account Holder Name *</label>
+                                    <input type="text" id="accountName" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="accountNumber">Account Number *</label>
+                                    <input type="text" id="accountNumber" class="form-control">
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Promo Code -->
-                    <div class="card">
+                </div>
+
+                <!-- Right column: Order Summary -->
+                <div class="order-summary">
+                    <h2 style="margin-bottom: 1rem;">Order Summary</h2>
+                    <div id="order-items" style="margin-bottom: 1rem;"></div>
+                    <div class="card" style="margin-bottom: 1rem;">
                         <div class="card-body">
                             <h2 style="margin-bottom: 1rem;">Discount Code</h2>
                             <div style="display: flex; gap: 1rem;">
@@ -149,12 +158,6 @@
                             <div id="promo-message" style="margin-top: 0.5rem;"></div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Order Summary -->
-                <div class="order-summary">
-                    <h2 style="margin-bottom: 1rem;">Order Summary</h2>
-                    <div id="order-items" style="margin-bottom: 1rem;"></div>
                     <hr>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <span>Subtotal</span>
@@ -186,13 +189,13 @@
     <footer>
         <div class="footer-content">
             <div class="footer-section">
-                <h3>About HersStep</h3>
+                <h3>About HerStep</h3>
                 <p>Your destination for stylish and comfortable women's footwear.</p>
             </div>
             <div class="footer-section">
                 <h3>Contact</h3>
                 <ul>
-                    <li>📧 support@hersstep.com</li>
+                    <li>📧 support@herstep.com</li>
                     <li>📞 1-800-HERSTEP</li>
                 </ul>
             </div>
@@ -246,8 +249,27 @@
                 renderOrderSummary();
             }
         }
+
+        // Enforce numeric-only input for specific fields and prevent negative values
+        function enforceNumericInputs() {
+            const selectors = ['#zipCode', '#reg-age', '#accountNumber', '#cardNumber', '#cvv', '#reg-phone'];
+            selectors.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => {
+                    el.setAttribute('inputmode', 'numeric');
+                    el.setAttribute('pattern', '\\d*');
+                    el.addEventListener('input', (e) => {
+                        const cleaned = e.target.value.replace(/[^0-9]/g, '');
+                        e.target.value = cleaned;
+                        const minAttr = e.target.getAttribute('min');
+                        if (minAttr !== null && cleaned !== '' && Number(cleaned) < Number(minAttr)) {
+                            e.target.value = String(Math.max(Number(cleaned), Number(minAttr)));
+                        }
+                    });
+                });
+            });
+        }
         
-        function placeOrder() {
+        async function placeOrder() {
             const errorEl = document.getElementById('error-message');
             errorEl.style.display = 'none';
 
@@ -290,11 +312,11 @@
                     }
 
                     try {
-                        auth.register(firstName, lastName, age, email, phone, password);
+                        await auth.register(firstName, lastName, age, email, phone, password);
                         showNotification('Account created. Continuing checkout...', 'success');
                         updateNav();
                     } catch (err) {
-                        errorEl.textContent = err.message;
+                        errorEl.textContent = err.message || 'Registration failed';
                         errorEl.style.display = 'block';
                         return;
                     }
@@ -315,6 +337,26 @@
             }
 
             const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+            if (paymentMethod === 'credit') {
+                if (!document.getElementById('cardNumber').value || !document.getElementById('expiry').value || !document.getElementById('cvv').value) {
+                    errorEl.textContent = 'Please fill in all card details';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+            } else if (paymentMethod === 'paypal') {
+                if (!document.getElementById('paypalEmail').value) {
+                    errorEl.textContent = 'Please enter your PayPal email';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+            } else if (paymentMethod === 'bank') {
+                if (!document.getElementById('accountName').value || !document.getElementById('accountNumber').value) {
+                    errorEl.textContent = 'Please enter bank account details';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+            }
             const subtotal = cart.getTotal();
             const shipping = subtotal >= 100 ? 0 : 9.99;
             const total = subtotal - discountAmount + shipping;
@@ -333,8 +375,8 @@
             };
 
             try {
-                // Save pending order and redirect to payment simulator
-                localStorage.setItem('hersstep_pendingOrder', JSON.stringify(orderData));
+                // Save pending order (session only) and redirect to payment simulator
+                sessionStorage.setItem('hersstep_pendingOrder', JSON.stringify(orderData));
                 showNotification('Redirecting to payment simulator...', 'info');
                 setTimeout(() => {
                     window.location.href = 'payment-sim.html';
@@ -349,7 +391,7 @@
         (function handlePaymentReturn() {
             const params = new URLSearchParams(window.location.search);
             const paymentStatus = params.get('payment');
-            const pendingRaw = localStorage.getItem('hersstep_pendingOrder');
+            const pendingRaw = sessionStorage.getItem('hersstep_pendingOrder');
             if (pendingRaw) {
                 try {
                     const pending = JSON.parse(pendingRaw);
@@ -379,10 +421,15 @@
         })();
 
         // Payment method change handler
+        // Replace the current radio button listener in checkout.html
         document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
             radio.addEventListener('change', function() {
-                const cardDetails = document.getElementById('card-details');
-                cardDetails.style.display = this.value === 'credit' ? 'block' : 'none';
+        // Hide all extra fields
+                document.querySelectorAll('.payment-fields').forEach(el => el.style.display = 'none');
+        // Show specific fields
+                const detailsId = `${this.value}-details`;
+                const target = document.getElementById(detailsId);
+                if (target) target.style.display = 'block';
             });
         });
 
@@ -398,9 +445,15 @@
                 createAccountCard.style.display = 'none';
             }
         }
-
-        // Initialize
+        // Wait for the DOM and all scripts to be ready
+        document.addEventListener('DOMContentLoaded', () => {
+    // Re-verify cart is loaded
+        if (window.cart && typeof window.cart.loadCart === 'function') {
+            window.cart.loadCart();
+        }
         renderOrderSummary();
+        enforceNumericInputs();
+        });
     </script>
 </body>
 </html>

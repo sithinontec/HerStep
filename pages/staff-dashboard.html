@@ -3,24 +3,26 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Staff Dashboard - HersStep</title>
+    <title>Staff Dashboard - HerStep</title>
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
     <header>
         <div class="top-bar">
             <span>Staff Dashboard</span>
-            <span>Contact: support@hersstep.com</span>
+            <span>Contact: support@herstep.com</span>
         </div>
         <nav class="nav-container">
-            <a href="index.html" class="logo">HersStep</a>
+            <a href="index.html" class="logo">HerStep</a>
             <ul class="nav-menu">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="products.html">Shop</a></li>
+                <li id="order-nav-item" style="display: none;"><a href="#" id="order-nav-link">Order</a></li>
+                <li id="dashboard-nav-item" style="display: none;"><a href="staff-dashboard.html">Dashboard</a></li>
                 <li class="auth-links"></li>
             </ul>
         </nav>
-    </header>
+    </header>   
 
     <main>
         <div class="container">
@@ -28,11 +30,10 @@
             <div class="card">
                 <div class="card-body">
                     <p>Welcome to the staff area — use the links below to manage products and orders.</p>
-                    <div style="display:flex; gap:1rem; margin-top:1rem;">
-                        <a href="staff-products.html" class="btn btn-primary">Manage Products</a>
-                        <a href="staff-orders.html" class="btn btn-secondary">View Orders</a>
-                        <a href="staff-reports.html" class="btn btn-secondary">Reports</a>
-                    </div>
+                            <div style="display:flex; gap:1rem; margin-top:1rem;">
+                                <a href="staff-products.html" class="btn btn-primary">Manage Products</a>
+                                <a href="staff-reports.html" class="btn btn-secondary">Reports</a>
+                            </div>
                 </div>
             </div>
 
@@ -43,7 +44,7 @@
     <footer>
         <div class="footer-content">
             <div class="footer-section">
-                <h3>About HersStep</h3>
+                <h3>About HerStep</h3>
                 <p>Your destination for stylish and comfortable women's footwear.</p>
             </div>
         </div>

@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Orders - HersStep</title>
+    <title>My Orders - HerStep</title>
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
     <header>
         <div class="top-bar">
             <span>Free shipping on orders over $100</span>
-            <span>Contact: support@hersstep.com</span>
+            <span>Contact: support@herstep.com</span>
         </div>
         <nav class="nav-container">
-            <a href="index.html" class="logo">HersStep</a>
+            <a href="index.html" class="logo">HerStep</a>
             <ul class="nav-menu">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="products.html">Shop</a></li>
+                <li id="order-nav-item"><a href="#" id="order-nav-link">Order</a></li>
+                <li id="dashboard-nav-item" style="display: none;"><a href="staff-dashboard.html">Dashboard</a></li>
                 <li class="auth-links"></li>
             </ul>
         </nav>
@@ -35,13 +37,13 @@
     <footer>
         <div class="footer-content">
             <div class="footer-section">
-                <h3>About HersStep</h3>
+                <h3>About HerStep</h3>
                 <p>Your destination for stylish and comfortable women's footwear.</p>
             </div>
             <div class="footer-section">
                 <h3>Contact</h3>
                 <ul>
-                    <li>📧 support@hersstep.com</li>
+                    <li>📧 support@herstep.com</li>
                     <li>📞 1-800-HERSTEP</li>
                 </ul>
             </div>
@@ -99,15 +101,15 @@
                             <div>
                                 <strong>Items:</strong>
                                 <ul style="margin-top: 0.5rem;">
-                                    ${order.items.map(item => `<li>${item.name} x${item.quantity}</li>`).join('')}
+                                    ${order.items.map(item => `<li>${(item.name || item.productName || 'Product #' + (item.productId||item.id))} x${item.quantity}</li>`).join('')}
                                 </ul>
                             </div>
                             <div>
                                 <strong>Shipping Address:</strong>
                                 <p style="margin-top: 0.5rem; color: var(--text-light);">
-                                    ${order.shippingAddress.fullName}<br>
-                                    ${order.shippingAddress.address}<br>
-                                    ${order.shippingAddress.city}, ${order.shippingAddress.zipCode}
+                                        ${order.shippingAddress && (order.shippingAddress.fullName || order.shippingAddress.name) || 'N/A'}<br>
+                                        ${order.shippingAddress && (order.shippingAddress.address || order.shippingAddress.addr) || ''}<br>
+                                        ${order.shippingAddress && (order.shippingAddress.city || '')}, ${order.shippingAddress && (order.shippingAddress.zipCode || order.shippingAddress.zip || '')}
                                 </p>
                             </div>
                         </div>
@@ -137,11 +139,15 @@
             window.location.href = 'order-details.html?orderId=' + orderId;
         }
         
-        function cancelOrder(orderId) {
+        async function cancelOrder(orderId) {
             if (confirm('Are you sure you want to cancel this order?')) {
-                orders.cancel(orderId);
-                showNotification('Order cancelled successfully', 'success');
-                renderOrders();
+                const ok = await orders.cancel(orderId);
+                if (ok) {
+                    showNotification('Order cancelled successfully', 'success');
+                    renderOrders();
+                } else {
+                    showNotification('Failed to cancel order', 'error');
+                }
             }
         }
         
@@ -159,7 +165,11 @@
             }
         }
         
-        renderOrders();
+        if (typeof orders !== 'undefined' && typeof orders.loadOrders === 'function') {
+            orders.loadOrders().then(() => renderOrders()).catch(() => renderOrders());
+        } else {
+            renderOrders();
+        }
     </script>
 </body>
 </html>

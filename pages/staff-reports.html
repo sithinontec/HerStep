@@ -3,21 +3,24 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Reports - HersStep (Staff)</title>
+    <title>Reports - HerStep (Staff)</title>
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
     <header>
         <div class="top-bar">
             <span>Staff Area</span>
-            <span>Contact: support@hersstep.com</span>
+            <span>Contact: support@herstep.com</span>
         </div>
         <nav class="nav-container">
-            <a href="index.html" class="logo">HersStep</a>
+            <a href="index.html" class="logo">HerStep</a>
             <ul class="nav-menu">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="products.html">Shop</a></li>
+                <li id="order-nav-item" style="display: none;"><a href="#" id="order-nav-link">Order</a></li>
+                <li id="dashboard-nav-item" style="display: none;"><a href="staff-dashboard.html">Dashboard</a></li>
                 <li class="auth-links"></li>
+                
             </ul>
         </nav>
     </header>
@@ -37,7 +40,7 @@
     <footer>
         <div class="footer-content">
             <div class="footer-section">
-                <h3>About HersStep</h3>
+                <h3>About HerStep</h3>
             </div>
         </div>
     </footer>
@@ -49,9 +52,17 @@
         }
 
         const el = document.getElementById('report-summary');
-        const totalSales = store.orders.reduce((s, o) => s + (o.total || 0), 0);
-        const count = store.orders.length;
-        el.innerHTML = `<div>Total orders: ${count}</div><div>Total sales: ${formatCurrency(totalSales)}</div>`;
+        function renderReport() {
+            const totalSales = (store.orders || []).reduce((s, o) => s + (o.total || 0), 0);
+            const count = (store.orders || []).length;
+            el.innerHTML = `<div>Total orders: ${count}</div><div>Total sales: ${formatCurrency(totalSales)}</div>`;
+        }
+
+        if (typeof orders !== 'undefined' && typeof orders.loadOrders === 'function') {
+            orders.loadOrders().then(() => renderReport()).catch(() => renderReport());
+        } else {
+            renderReport();
+        }
     </script>
 </body>
 </html>

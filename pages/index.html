@@ -3,21 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HersStep - Women's Footwear Online Shop</title>
+    <title>HerStep - Women's Footwear Online Shop</title>
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
     <header>
         <div class="top-bar">
             <span>Free shipping on orders over $100</span>
-            <span>Contact: support@hersstep.com</span>
+            <span>Contact: support@herstep.com</span>
         </div>
         <nav class="nav-container">
-            <a href="index.html" class="logo">HersStep</a>
+            <a href="index.html" class="logo">HerStep</a>
             <ul class="nav-menu">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="products.html">Shop</a></li>
                 <li><a href="about.html">About</a></li>
+                <li id="order-nav-item"><a href="#" id="order-nav-link">Order</a></li>
+                <li id="dashboard-nav-item" style="display: none;"><a href="staff-dashboard.html">Dashboard</a></li>
                 <li class="auth-links">
                     <a href="login.html">Login</a>
                     <a href="signup.html">Sign Up</a>
@@ -45,7 +47,7 @@
             <section style="margin-top: 3rem;">
                 <h2 style="text-align: center; margin-bottom: 1rem;">Featured Products</h2>
                 <p style="text-align: center; color: var(--text-light);">Handpicked styles just for you</p>
-                
+
                 <div class="product-grid" id="featured-products">
                     <!-- Products will be loaded dynamically -->
                 </div>
@@ -84,7 +86,7 @@
     <footer>
         <div class="footer-content">
             <div class="footer-section">
-                <h3>About HersStep</h3>
+                <h3>About HerStep</h3>
                 <p>Your destination for stylish and comfortable women's footwear. We believe every step should be confident and comfortable.</p>
             </div>
             <div class="footer-section">
@@ -108,46 +110,66 @@
             <div class="footer-section">
                 <h3>Contact</h3>
                 <ul>
-                    <li>📧 support@hersstep.com</li>
+                    <li>📧 support@herstep.com</li>
                     <li>📞 1-800-HERSTEP</li>
                     <li>📍 123 Fashion Ave, NY</li>
                 </ul>
             </div>
         </div>
         <div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
-            <p>&copy; 2026 HersStep. All rights reserved.</p>
+            <p>&copy; 2026 HerStep. All rights reserved.</p>
         </div>
     </footer>
 
     <script src="../js/app.js"></script>
     <script>
-        // Load featured products
+        // FIX 3: Define renderProducts on window BEFORE app.js calls it.
+        // app.js's loadProducts() is async — it calls window.renderProducts()
+        // once the fetch resolves. By defining it here as window.renderProducts,
+        // we hook into that callback instead of calling it immediately on an
+        // empty store (which was the original timing bug).
+        window.renderProducts = function() {
+            loadFeaturedProducts();
+        };
+
         function loadFeaturedProducts() {
             const container = document.getElementById('featured-products');
-            const featuredProducts = store.products.slice(0, 4);
-            
+            if (!container) return;
+
+            // Show only the first 4 products as featured
+            const featuredProducts = window.store.products.slice(0, 4);
+
+            if (featuredProducts.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:var(--text-light);">No featured products available.</p>';
+                return;
+            }
+
             container.innerHTML = featuredProducts.map(product => `
                 <div class="card">
-                    <div class="card-img">${product.image}</div>
+                    <div class="card-img">
+                        <img src="${product.image}" alt="${product.name}" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
                     <div class="card-body">
                         <h3 class="card-title">${product.name}</h3>
-                        <p class="card-text">${product.description}</p>
-                        <div class="card-price">${formatCurrency(product.price)}</div>
+                        <p class="card-text">${product.description || ''}</p>
+                        <div class="card-price">${window.formatCurrency(product.price)}</div>
                         <button class="btn btn-primary" onclick="addToCart(${product.id})">Add to Cart</button>
                     </div>
                 </div>
             `).join('');
         }
 
+        // FIX 4: Use window.store.products.find() instead of products.getById()
+        // which never existed on the products object in app.js.
         function addToCart(productId) {
-            const product = products.getById(productId);
+            const product = window.store.products.find(p => p.id === productId);
             if (product) {
-                cart.add(product);
-                showNotification('Added to cart!', 'success');
+                window.cart.add(product);
+                window.showNotification('Added to cart!', 'success');
+            } else {
+                console.error('Product not found:', productId);
             }
         }
-
-        loadFeaturedProducts();
     </script>
 </body>
 </html>
