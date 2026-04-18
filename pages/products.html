@@ -178,6 +178,10 @@
                         <div class="price">${window.formatCurrency(product.price)}</div>
                         <div class="stock ${Number(product.stock || 0) > 0 ? 'in-stock' : 'out-of-stock'}">Stock: ${Number(product.stock || 0)}</div>
                     </div>
+                    <div class="product-meta" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:0.25rem;font-size:0.9rem;color:var(--text-light);">
+                        <div>Model: ${product.model || '—'}</div>
+                        <div>ID: ${product.id}</div>
+                    </div>
                     <button class="btn btn-primary" onclick="addToCart(${product.id})" ${Number(product.stock || 0) > 0 ? '' : 'disabled'}>Add to Cart</button>
                 </div>
             `).join('');
