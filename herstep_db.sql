@@ -66,7 +66,7 @@ VALUES
 
 INSERT INTO users (first_name, last_name, email, password, role)
 VALUES 
-    ('Staff','User','staff@hersstep.com','staff123','staff'),
-    ('Customer','User','customer@hersstep.com','customer123','customer')
+    ('Staff','User','staff@herstep.com','staff123','staff'),
+    ('Customer','User','customer@herstep.com','customer123','customer')
 ON DUPLICATE KEY UPDATE email = email;
 

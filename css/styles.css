@@ -41,7 +41,7 @@ header {
 .top-bar {
     background-color: var(--primary-color);
     color: var(--white);
-    padding: 0.5rem 2rem;
+    padding: 0.75rem 2.5rem;
     font-size: 0.9rem;
     display: flex;
     justify-content: space-between;
@@ -52,7 +52,7 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 2rem;
+    padding: 1rem 2.5rem;
     max-width: 1400px;
     margin: 0 auto;
 }
@@ -76,6 +76,13 @@ header {
     color: var(--text-dark);
     font-weight: 500;
     transition: color 0.3s;
+}
+
+/* Small spacing for auth links: group and add gap */
+.nav-menu .auth-links {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .nav-menu a:hover {
@@ -111,7 +118,7 @@ main {
 .container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 3rem;
 }
 
 /* Buttons */
@@ -263,7 +270,7 @@ main {
     background: var(--white);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 1rem;
+    padding: 1.5rem;
     text-align: left;
     display: flex;
     flex-direction: column;

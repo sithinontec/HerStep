@@ -21,8 +21,8 @@
                 <li id="order-nav-item"><a href="#" id="order-nav-link">Order</a></li>
                 <li id="dashboard-nav-item" style="display: none;"><a href="staff-dashboard.html">Dashboard</a></li>
                 <li class="auth-links">
-                    <a href="login.html">Login</a>
-                    <a href="signup.html">Sign Up</a>
+                    <a href="login.html" class="btn">Login</a>
+                    <a href="signup.html" class="btn btn-primary">Sign Up</a>
                 </li>
                 <li>
                     <a href="cart.html" class="cart-icon">
@@ -152,7 +152,14 @@
                     <div class="card-body">
                         <h3 class="card-title">${product.name}</h3>
                         <p class="card-text">${product.description || ''}</p>
-                        <div class="card-price">${window.formatCurrency(product.price)}</div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+                            <div class="card-price">${window.formatCurrency(product.price)}</div>
+                            <div style="font-size:0.9rem;color:var(--text-light);">Model: ${product.model || '—'} • ID: ${product.id}</div>
+                        </div>
+                        <div style="margin-top:0.5rem; font-size:0.95rem; color:var(--text-light); display:flex; justify-content:space-between; align-items:center;">
+                            <div>Stock: ${Number(product.stock || 0)}</div>
+                            <div></div>
+                        </div>
                         <button class="btn btn-primary" onclick="addToCart(${product.id})">Add to Cart</button>
                     </div>
                 </div>
