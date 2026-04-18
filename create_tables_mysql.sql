@@ -59,9 +59,9 @@ CREATE TABLE IF NOT EXISTS order_items (
 -- Seed some initial data (optional)
 INSERT IGNORE INTO products (name, model, color, description, price, stock, image)
 VALUES
-  ('Sporty Runner','Sneakers','White/Blue','Lightweight running shoes',79.99,30,'https://via.placeholder.com/300x200?text=Sporty+Runner'),
-  ('Pro Trainer','Sneakers','Black/Red','High-performance trainers',99.99,20,'https://via.placeholder.com/300x200?text=Pro+Trainer'),
-  ('Court Classic','Court','White','Classic court sneakers',89.99,15,'https://via.placeholder.com/300x200?text=Court+Classic');
+  ('Sporty Runner','Sneakers','White/Blue','Lightweight running shoes',79.99,30,'https://placehold.co/300X200'),
+  ('Pro Trainer','Sneakers','Black/Red','High-performance trainers',99.99,20,'https://placehold.co/300X200'),
+  ('Court Classic','Court','White','Classic court sneakers',89.99,15,'https://placehold.co/300X200');
 
 
 INSERT INTO users (first_name, last_name, email, password, role)

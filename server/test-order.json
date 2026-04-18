@@ -1,0 +1,9 @@
+{
+  
+  "total": 19.98,
+  "discount": 0,
+  "paymentMethod": "credit",
+  "status": "placed",
+  "shippingAddress": { "fullName": "Test User", "address": "123 Test St", "city": "Testville", "zipCode": "12345" },
+  "items": [ { "id": 2, "name": "Test Product", "quantity": 2, "price": 9.99 } ]
+}

@@ -9,7 +9,7 @@ const pool = mysql.createPool({
 
 module.exports = {
   query: async (sql, params) => {
-    const [rows] = await pool.execute(sql, params);
+    const [rows] = await pool.query(sql, params);
     return rows; // Return the rows directly
   },
   testConnection: async () => {

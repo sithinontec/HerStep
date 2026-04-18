@@ -3,20 +3,22 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Payment Simulator - HersStep</title>
+    <title>Payment Simulator - HerStep</title>
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
     <header>
         <div class="top-bar">
             <span>Free shipping on orders over $100</span>
-            <span>Contact: support@hersstep.com</span>
+            <span>Contact: support@herstep.com</span>
         </div>
         <nav class="nav-container">
-            <a href="index.html" class="logo">HersStep</a>
+            <a href="index.html" class="logo">HerStep</a>
             <ul class="nav-menu">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="products.html">Shop</a></li>
+                <li id="order-nav-item"><a href="#" id="order-nav-link">Order</a></li>
+                <li id="dashboard-nav-item" style="display: none;"><a href="staff-dashboard.html">Dashboard</a></li>
                 <li class="auth-links"></li>
             </ul>
         </nav>
@@ -47,7 +49,7 @@
     <footer>
         <div class="footer-content">
             <div class="footer-section">
-                <h3>About HersStep</h3>
+                <h3>About HerStep</h3>
                 <p>Your destination for stylish and comfortable women's footwear.</p>
             </div>
         </div>
@@ -56,7 +58,7 @@
     <script src="../js/app.js"></script>
     <script>
         function renderPending() {
-            const pendingRaw = localStorage.getItem('hersstep_pendingOrder');
+            const pendingRaw = sessionStorage.getItem('hersstep_pendingOrder');
             const container = document.getElementById('pending-order-details');
             if (!pendingRaw) {
                 container.innerHTML = '<div class="error-message">No pending order found. Return to checkout to create an order.</div>';
@@ -89,7 +91,7 @@
             if (!pending) return;
             try {
                 const newOrder = await orders.place(pending);
-                localStorage.removeItem('hersstep_pendingOrder');
+                sessionStorage.removeItem('hersstep_pendingOrder');
                 msg.innerHTML = '<div style="color:var(--success-color);">Payment successful — order completed.</div>';
                 setTimeout(() => {
                     window.location.href = 'order-confirmation.html?orderId=' + newOrder.id;

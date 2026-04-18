@@ -37,6 +37,15 @@ Serving via the included server ensures frontend calls to `/api/*` work and data
 - **Password:** admin123  
 _Note: Admin UI is not part of the current prototype; staff pages are included for product/order workflows._
 
+
+## Promo codes
+
+## SAVE10 -- 10% off
+
+## WELCOME20 -- 20% off
+
+## FIVEOFF -- $5 off
+
 ## 📁 Project Structure
 
 ```
@@ -144,7 +153,7 @@ Staff pages are included for product and order management (read-only in this pro
 ## 🔧 Technical Details
 
 - **Vanilla JavaScript:** No frameworks or libraries required
-- **localStorage:** Cart, user session and orders are persisted in `localStorage` (keys: `hersstep_cart`, `hersstep_currentUser`, `hersstep_orders`, `hersstep_pendingOrder`)
+-- **localStorage:** Cart and user session are persisted in `localStorage` (keys: `hersstep_cart`, `hersstep_currentUser`). Orders are kept in-memory by default and will be sent to the server if an `/api/orders` endpoint is available.
 - **Mock Data:** Pre-populated products and test accounts (staff/admin UI removed)
 - **Client-Side Only:** No backend required for prototype
 

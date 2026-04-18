@@ -8,7 +8,13 @@ const store = {
     cart: [],
     users: [],
     orders: [],
-    currentUser: null
+    currentUser: null,
+    // Promo codes for testing: keys are code strings
+    promoCodes: {
+        'SAVE10': { type: 'percent', value: 10 },   // 10% off
+        'WELCOME20': { type: 'percent', value: 20 }, // 20% off
+        'FIVEOFF': { type: 'fixed', value: 5 }       // $5 off
+    }
 };
 
 // Robust Response.json patch to avoid parse errors on empty bodies
@@ -172,26 +178,101 @@ const cart = {
 };
 
 // 4. PRODUCT MANAGEMENT
-// FIX 2: loadProducts now calls window.renderProducts so each page can define
-//         its own renderer. The old renderProducts in app.js is removed because
-//         it looked for #product-grid which doesn't match any page's actual ID,
-//         and it conflicted with the version defined in products.html.
+// Products service with localStorage-backed CRUD for staff pages and a
+// network loader used by public pages. Provides helpers used by staff-products.html.
 const products = {
+    // Always load products from the server database API
     loadProducts: function() {
-        return fetch('/api/products')
-            .then(r => r.json())
-            .then(data => {
+        return fetch((window.API_BASE || '') + '/api/products')
+            .then(async r => {
+                if (!r.ok) throw new Error('Failed to fetch products from API');
+                const data = await r.json();
                 if (Array.isArray(data)) {
                     window.store.products = data;
-
-                    // Call whichever renderProducts the current page has defined.
-                    // index.html defines its own, products.html defines its own.
-                    if (typeof window.renderProducts === 'function') {
-                        window.renderProducts();
-                    }
+                    if (typeof window.renderProducts === 'function') window.renderProducts();
                 }
+                return data;
             })
-            .catch(err => console.error('Failed to load products:', err));
+            .catch(err => {
+                console.error('products.loadProducts error:', err);
+                // Keep store.products unchanged on error and rethrow
+                throw err;
+            });
+    },
+    storageKey: 'hersstep_products',
+    loadFromStorage: function() {
+        const raw = localStorage.getItem(this.storageKey);
+        if (raw) {
+            try { store.products = JSON.parse(raw); } catch (e) { store.products = []; }
+        } else {
+            store.products = store.products || [];
+        }
+    },
+    saveProducts: function() {
+        localStorage.setItem(this.storageKey, JSON.stringify(store.products || []));
+    },
+    getById: function(id) {
+        return (store.products || []).find(p => Number(p.id) === Number(id));
+    },
+    validate: function(data, existingId) {
+        const errors = [];
+        if (!data.name || String(data.name).trim().length < 1) errors.push('Name is required');
+        if (!data.price || Number(data.price) < 0) errors.push('Price must be a non-negative number');
+        if (data.stock == null || Number(data.stock) < 0) errors.push('Stock must be 0 or greater');
+        return errors;
+    },
+    add: async function(productData) {
+        const errors = this.validate(productData);
+        if (errors.length) throw new Error(errors.join('; '));
+        const id = (store.products && store.products.length ? Math.max(...store.products.map(p => Number(p.id) || 0)) + 1 : 1);
+        const prod = Object.assign({ id }, productData);
+        store.products = store.products || [];
+        store.products.push(prod);
+
+        // Try to persist to API
+        try {
+            const res = await fetch((window.API_BASE || '') + '/api/products', {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(store.products)
+            });
+            if (!res.ok) throw new Error('API save failed');
+        } catch (e) {
+            // Fallback: save locally
+            this.saveProducts();
+        }
+
+        return prod;
+    },
+    update: async function(id, updates) {
+        const p = this.getById(id);
+        if (!p) throw new Error('Product not found');
+        const merged = Object.assign({}, p, updates);
+        const errors = this.validate(merged, id);
+        if (errors.length) throw new Error(errors.join('; '));
+        Object.assign(p, updates);
+
+        try {
+            const res = await fetch((window.API_BASE || '') + '/api/products', {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(store.products)
+            });
+            if (!res.ok) throw new Error('API save failed');
+        } catch (e) {
+            this.saveProducts();
+        }
+
+        return p;
+    },
+    remove: async function(id) {
+        const before = store.products ? store.products.length : 0;
+        store.products = (store.products || []).filter(p => Number(p.id) !== Number(id));
+        try {
+            const res = await fetch((window.API_BASE || '') + '/api/products', {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(store.products)
+            });
+            if (!res.ok) throw new Error('API save failed');
+        } catch (e) {
+            this.saveProducts();
+        }
+        return store.products.length < before;
     }
 };
 
@@ -245,6 +326,42 @@ function showNotification(message, type = 'success') {
     setTimeout(() => n.remove(), 3000);
 }
 
+function updateNav() {
+    const orderItem = document.getElementById('order-nav-item');
+    const orderLink = document.getElementById('order-nav-link');
+    const dashItem = document.getElementById('dashboard-nav-item');
+    
+    // NEW: Target the back button
+    const backBtn = document.getElementById('dynamic-order-btn');
+    
+    // Check if user is logged in
+    if (store.currentUser) {
+        // Navigation Bar Logic
+        if (orderItem && orderLink) {
+            orderItem.style.display = 'block';
+            if (store.currentUser.role === 'staff') {
+                orderLink.href = 'staff-orders.html';
+            } else {
+                orderLink.href = 'orders.html'; // Matches your specific link
+            }
+        }
+        
+        // Dashboard Logic
+        if (dashItem) {
+            dashItem.style.display = (store.currentUser.role === 'staff') ? 'block' : 'none';
+        }
+
+        // --- NEW: Back Button Logic ---
+        if (backBtn) {
+            backBtn.href = (store.currentUser.role === 'staff') ? 'staff-orders.html' : 'orders.html';
+        }
+    } else {
+        // If not logged in, hide items
+        if (orderItem) orderItem.style.display = 'none';
+        if (dashItem) dashItem.style.display = 'none';
+    }
+}
+
 // 6. EXPOSE TO WINDOW FOR GLOBAL ACCESS
 window.store = store;
 window.auth = auth;
@@ -254,6 +371,119 @@ window.showNotification = showNotification;
 window.formatCurrency = formatCurrency;
 window.isLoggedIn = isLoggedIn;
 window.updateNavAuth = updateNavAuth;
+// Orders service: simple localStorage-backed implementation used by payment simulator
+const orders = {
+    load: function() {
+        // Keep orders in-memory by default. If a server API exists, try fetching.
+        store.orders = store.orders || [];
+    },
+    save: async function() {
+        // Attempt to persist to server if API endpoint exists; otherwise do nothing (no localStorage)
+        if (!store.orders) store.orders = [];
+        try {
+            const res = await fetch((window.API_BASE || '') + '/api/orders', {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(store.orders)
+            });
+            if (!res.ok) throw new Error('API save failed');
+        } catch (e) {
+            // Intentionally do not fall back to localStorage — orders persistence disabled
+        }
+    },
+    // Promise-based loader to match pages expecting async
+    loadOrders: async function() {
+        // Prefer fetching from API if available
+        try {
+            const r = await fetch((window.API_BASE || '') + '/api/orders');
+            if (r.ok) {
+                const data = await r.json();
+                store.orders = Array.isArray(data) ? data : [];
+                return store.orders;
+            }
+        } catch (e) {
+            // ignore network errors and keep in-memory orders
+        }
+        this.load();
+        return Promise.resolve(store.orders);
+    },
+    getUserOrders: function() {
+        if (!store.currentUser) return [];
+        const uid = String(store.currentUser.id || store.currentUser.email);
+        return (store.orders || []).filter(o => {
+            const oid = o.userId != null ? String(o.userId) : (o.userEmail || '');
+            return oid === uid;
+        });
+    },
+    cancel: function(orderId) {
+        const ord = (store.orders || []).find(o => o.id === orderId);
+        if (!ord) return false;
+        if (ord.status === 'cancelled') return true;
+        // Restore stock for items if possible
+        if (Array.isArray(ord.items)) {
+            ord.items.forEach(it => {
+                try {
+                    const prod = products.getById(it.id);
+                    if (prod) {
+                        prod.stock = (Number(prod.stock) || 0) + (Number(it.quantity) || 0);
+                    }
+                } catch (e) {}
+            });
+            // persist product changes
+            products.saveProducts();
+        }
+        ord.status = 'cancelled';
+        this.save();
+        return true;
+    },
+    updateStatus: function(orderId, status) {
+        const ord = (store.orders || []).find(o => o.id === orderId);
+        if (!ord) return false;
+        ord.status = status;
+        this.save();
+        return true;
+    },
+    place: async function(pending) {
+        // Simulate network delay
+        await new Promise(r => setTimeout(r, 150));
+        const id = 'ORD-' + Date.now();
+        const order = Object.assign({ id, createdAt: new Date().toISOString() }, pending);
+        // Attach user identity if available
+        if (store.currentUser) {
+            order.userId = store.currentUser.id || store.currentUser.email;
+            order.userEmail = store.currentUser.email || null;
+        }
+        // Default status and total
+        order.status = order.status || 'placed';
+        order.total = order.total || (cart.getTotal() - (order.discount || 0) + (cart.getTotal() >= 100 ? 0 : 9.99));
+        // Ensure cart snapshot
+        order.items = Array.isArray(store.cart) ? JSON.parse(JSON.stringify(store.cart)) : [];
+        store.orders = store.orders || [];
+        // Try to POST to server API first
+        try {
+            const r = await fetch((window.API_BASE || '') + '/api/orders', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order)
+            });
+            if (r.ok) {
+                const created = await r.json();
+                store.orders.push(created);
+                // Refresh products to reflect updated stock
+                try { await products.loadProducts(); } catch (e) {}
+                // Clear cart after successful order
+                cart.clear();
+                return created;
+            }
+        } catch (e) {
+            // ignore and fallback to in-memory
+        }
+
+        // Fallback: keep in-memory order (no localStorage)
+        store.orders.push(order);
+        try { await this.save(); } catch (e) {}
+        cart.clear();
+        return order;
+    }
+};
+orders.load();
+window.orders = orders;
 window.cart.loadCart();
 if (typeof updateCartCount === 'function') updateCartCount();
 
@@ -262,3 +492,8 @@ auth.loadSession();
 cart.loadCart();
 updateNavAuth();        // update nav on every page immediately
 products.loadProducts();
+
+document.addEventListener('DOMContentLoaded', updateNav);
+setTimeout(() => {
+    updateNav();
+}, 100);

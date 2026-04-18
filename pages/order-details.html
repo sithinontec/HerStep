@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Details - HersStep</title>
+    <title>Order Details - HerStep</title>
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
     <header>
         <div class="top-bar">
             <span>Free shipping on orders over $100</span>
-            <span>Contact: support@hersstep.com</span>
+            <span>Contact: support@herstep.com</span>
         </div>
         <nav class="nav-container">
-            <a href="index.html" class="logo">HersStep</a>
+            <a href="index.html" class="logo">HerStep</a>
             <ul class="nav-menu">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="products.html">Shop</a></li>
+                <li id="order-nav-item"><a href="#" id="order-nav-link">Order</a></li>
+                <li id="dashboard-nav-item" style="display: none;"><a href="staff-dashboard.html">Dashboard</a></li>
                 <li class="auth-links"></li>
             </ul>
         </nav>
@@ -34,7 +36,7 @@
                         </div>
                         
                         <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-                            <a href="orders.html" class="btn btn-secondary">Back to Orders</a>
+                            <a href="#" id="dynamic-order-btn" class="btn btn-secondary">Back to Orders</a>
                             <button class="btn btn-secondary" onclick="window.print()">🖨️ Print</button>
                         </div>
                     </div>
@@ -46,13 +48,13 @@
     <footer>
         <div class="footer-content">
             <div class="footer-section">
-                <h3>About HersStep</h3>
+                <h3>About HerStep</h3>
                 <p>Your destination for stylish and comfortable women's footwear.</p>
             </div>
             <div class="footer-section">
                 <h3>Contact</h3>
                 <ul>
-                    <li>📧 support@hersstep.com</li>
+                    <li>📧 support@herstep.com</li>
                     <li>📞 1-800-HERSTEP</li>
                 </ul>
             </div>
@@ -70,7 +72,7 @@
                 return;
             }
             
-            const order = store.orders.find(o => o.id === orderId);
+            const order = store.orders.find(o => String(o.id) === String(orderId) || String(o.orderNumber) === String(orderId));
             
             if (!order) {
                 document.getElementById('order-details-content').innerHTML = '<p>Order not found</p>';
@@ -97,17 +99,17 @@
                     <div>
                         <h3 style="margin-bottom: 1rem;">Shipping Address</h3>
                         <p style="color: var(--text-light); line-height: 1.8;">
-                            ${order.shippingAddress.fullName}<br>
-                            ${order.shippingAddress.address}<br>
-                            ${order.shippingAddress.city}, ${order.shippingAddress.zipCode}
+                            ${ (order.shippingAddress && (order.shippingAddress.fullName || order.shippingAddress.name)) || 'N/A'}<br>
+                            ${ (order.shippingAddress && (order.shippingAddress.address || order.shippingAddress.addr)) || '' }<br>
+                            ${ (order.shippingAddress && (order.shippingAddress.city || '')) }, ${ (order.shippingAddress && (order.shippingAddress.zipCode || order.shippingAddress.zip || '')) }
                         </p>
                     </div>
                     <div>
                         <h3 style="margin-bottom: 1rem;">Payment Information</h3>
                         <p style="color: var(--text-light); line-height: 1.8;">
-                            <strong>Method:</strong> ${order.paymentMethod.toUpperCase()}<br>
+                            <strong>Method:</strong> ${(order.paymentMethod || '').toUpperCase()}<br>
                             <strong>Customer:</strong> ${user ? user.firstName + ' ' + user.lastName : 'N/A'}<br>
-                            <strong>Email:</strong> ${user ? user.email : 'N/A'}
+                            <strong>Email:</strong> ${user ? user.email : (order.userEmail || 'N/A')}
                         </p>
                     </div>
                 </div>
@@ -128,13 +130,13 @@
                                 <tr>
                                     <td>
                                         <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                            <span style="font-size: 1.5rem;">${item.image}</span>
-                                            <span>${item.name}</span>
+                                            <span style="font-size: 1.5rem;">${item.image || ''}</span>
+                                            <span>${(item.name || item.productName || 'Product #' + (item.productId||item.id))}</span>
                                         </div>
                                     </td>
                                     <td>${item.quantity}</td>
-                                    <td>${formatCurrency(item.price)}</td>
-                                    <td>${formatCurrency(item.price * item.quantity)}</td>
+                                    <td>${formatCurrency(item.price || item.unitPrice || item.unit_price || 0)}</td>
+                                    <td>${formatCurrency((item.price || item.unitPrice || item.unit_price || 0) * item.quantity)}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -144,7 +146,7 @@
                 <div style="background: var(--light-gray); padding: 1.5rem; border-radius: 8px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <span>Subtotal</span>
-                        <span>${formatCurrency(order.items.reduce((sum, i) => sum + i.price * i.quantity, 0))}</span>
+                        <span>${formatCurrency(order.items.reduce((sum, i) => sum + ((i.price || i.unitPrice || i.unit_price || 0) * (i.quantity || 0)), 0))}</span>
                     </div>
                     ${order.discount > 0 ? `
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--success-color);">
@@ -163,24 +165,25 @@
                     </div>
                 </div>
                 
-                <div style="margin-top: 2rem; padding: 1rem; background: var(--light-gray); border-radius: 8px;">
-                    <h3 style="margin-bottom: 0.5rem;">Need Help?</h3>
-                    <p style="color: var(--text-light); margin-bottom: 1rem;">
-                        Have questions about your order? Contact our support team.
-                    </p>
-                    <div style="display: flex; gap: 1rem;">
-                        <button class="btn btn-secondary" onclick="contactSupport()">📧 Contact Support</button>
-                        ${order.status === 'placed' ? `
-                            <button class="btn btn-danger" onclick="cancelOrder()">Cancel Order</button>
-                        ` : ''}
-                        ${order.status === 'delivered' ? `
-                            <button class="btn btn-secondary" onclick="requestReturn()">Return/Refund</button>
-                        ` : ''}
+                ${(store.currentUser && store.currentUser.role !== 'staff') ? `
+                    <div style="margin-top: 2rem; padding: 1rem; background: var(--light-gray); border-radius: 8px;">
+                        <h3 style="margin-bottom: 0.5rem;">Need Help?</h3>
+                        <p style="color: var(--text-light); margin-bottom: 1rem;">
+                            Have questions about your order? Contact our support team.
+                        </p>
+                        <div style="display: flex; gap: 1rem;">
+                            <button class="btn btn-secondary" onclick="contactSupport()">Contact Support</button>
+                            ${order.status === 'placed' ? `
+                                <button class="btn btn-danger" onclick="cancelOrder()">Cancel Order</button>
+                            ` : ''}
+                            ${order.status === 'delivered' ? `
+                                <button class="btn btn-secondary" onclick="requestReturn()">Return/Refund</button>
+                            ` : ''}
+                        </div>
                     </div>
-                </div>
+                ` : ''}
             `;
         }
-        
         function getStatusColor(status) {
             const colors = {
                 'placed': 'var(--primary-color)',

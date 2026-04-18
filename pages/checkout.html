@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - HersStep</title>
+    <title>Checkout - HerStep</title>
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
     <header>
         <div class="top-bar">
             <span>Free shipping on orders over $100</span>
-            <span>Contact: support@hersstep.com</span>
+            <span>Contact: support@herstep.com</span>
         </div>
         <nav class="nav-container">
-            <a href="index.html" class="logo">HersStep</a>
+            <a href="index.html" class="logo">HerStep</a>
             <ul class="nav-menu">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="products.html">Shop</a></li>
+                <li id="order-nav-item"><a href="#" id="order-nav-link">Order</a></li>
+                <li id="dashboard-nav-item" style="display: none;"><a href="staff-dashboard.html">Dashboard</a></li>
                 <li class="auth-links"></li>
             </ul>
         </nav>
@@ -27,7 +29,7 @@
             <h1 style="margin-bottom: 2rem;">Checkout</h1>
             
             <div class="checkout-grid">
-                <div>
+                <div class="left-column">
                     <!-- Shipping Information -->
                     <div class="card" style="margin-bottom: 2rem;">
                         <div class="card-body">
@@ -100,52 +102,53 @@
                     <div class="card" style="margin-bottom: 2rem;">
                         <div class="card-body">
                             <h2 style="margin-bottom: 1rem;">Payment Method</h2>
-                        <div class="form-group">
-                            <label><input type="radio" name="paymentMethod" value="credit" checked> 💳 Credit/Debit Card</label>
-                        </div>
-                        <div class="form-group">
-                            <label><input type="radio" name="paymentMethod" value="paypal"> 🅿️ PayPal</label>
-                        </div>
-                        <div class="form-group">
-                            <label><input type="radio" name="paymentMethod" value="bank"> 🏦 Bank Transfer</label>
-                        </div>
-        
-                    <div id="card-details" class="payment-fields">
-                        <div class="form-group">
-                            <label for="cardNumber">Card Number *</label>
-                            <input type="text" id="cardNumber" class="form-control" placeholder="1234 5678 9012 3456">
-                        </div>
-                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
-                            <div class="form-group"><label for="expiry">Expiry Date *</label><input type="text" id="expiry" class="form-control" placeholder="MM/YY"></div>
-                            <div class="form-group"><label for="cvv">CVV *</label><input type="text" id="cvv" class="form-control" placeholder="123"></div>
-                        </div>
-                    </div>
+                            <div class="form-group">
+                                <label><input type="radio" name="paymentMethod" value="credit" checked> 💳 Credit/Debit Card</label>
+                            </div>
+                            <div class="form-group">
+                                <label><input type="radio" name="paymentMethod" value="paypal"> 🅿️ PayPal</label>
+                            </div>
+                            <div class="form-group">
+                                <label><input type="radio" name="paymentMethod" value="bank"> 🏦 Bank Transfer</label>
+                            </div>
 
-                    <div id="paypal-details" class="payment-fields" style="display: none;">
-                        <div class="form-group">
-                            <label for="paypalEmail">PayPal Email *</label>
-                            <input type="email" id="paypalEmail" class="form-control" placeholder="email@example.com">
-                        </div>
-                    </div>
+                            <div id="credit-details" class="payment-fields">
+                                <div class="form-group">
+                                    <label for="cardNumber">Card Number *</label>
+                                    <input type="text" id="cardNumber" class="form-control" placeholder="1234 5678 9012 3456">
+                                </div>
+                                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                                    <div class="form-group"><label for="expiry">Expiry Date *</label><input type="text" id="expiry" class="form-control" placeholder="MM/YY"></div>
+                                    <div class="form-group"><label for="cvv">CVV *</label><input type="text" id="cvv" class="form-control" placeholder="123"></div>
+                                </div>
+                            </div>
 
-                    <div id="bank-details" class="payment-fields" style="display: none;">
-                        <div class="form-group">
-                            <label for="accountName">Account Holder Name *</label>
-                            <input type="text" id="accountName" class="form-control">
-                        </div>
-                    <div class="form-group">
-                            <label for="accountNumber">Account Number *</label>
-                            <input type="text" id="accountNumber" class="form-control">
+                            <div id="paypal-details" class="payment-fields" style="display: none;">
+                                <div class="form-group">
+                                    <label for="paypalEmail">PayPal Email *</label>
+                                    <input type="email" id="paypalEmail" class="form-control" placeholder="email@example.com">
+                                </div>
+                            </div>
+
+                            <div id="bank-details" class="payment-fields" style="display: none;">
+                                <div class="form-group">
+                                    <label for="accountName">Account Holder Name *</label>
+                                    <input type="text" id="accountName" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="accountNumber">Account Number *</label>
+                                    <input type="text" id="accountNumber" class="form-control">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-                    
-                    <!-- Promo Code -->
-                    <div class="card">
+
+                <!-- Right column: Order Summary -->
+                <div class="order-summary">
+                    <h2 style="margin-bottom: 1rem;">Order Summary</h2>
+                    <div id="order-items" style="margin-bottom: 1rem;"></div>
+                    <div class="card" style="margin-bottom: 1rem;">
                         <div class="card-body">
                             <h2 style="margin-bottom: 1rem;">Discount Code</h2>
                             <div style="display: flex; gap: 1rem;">
@@ -155,12 +158,6 @@
                             <div id="promo-message" style="margin-top: 0.5rem;"></div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Order Summary -->
-                <div class="order-summary">
-                    <h2 style="margin-bottom: 1rem;">Order Summary</h2>
-                    <div id="order-items" style="margin-bottom: 1rem;"></div>
                     <hr>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <span>Subtotal</span>
@@ -192,13 +189,13 @@
     <footer>
         <div class="footer-content">
             <div class="footer-section">
-                <h3>About HersStep</h3>
+                <h3>About HerStep</h3>
                 <p>Your destination for stylish and comfortable women's footwear.</p>
             </div>
             <div class="footer-section">
                 <h3>Contact</h3>
                 <ul>
-                    <li>📧 support@hersstep.com</li>
+                    <li>📧 support@herstep.com</li>
                     <li>📞 1-800-HERSTEP</li>
                 </ul>
             </div>
@@ -251,6 +248,25 @@
                 messageEl.innerHTML = `<span class="error-message">Invalid promo code</span>`;
                 renderOrderSummary();
             }
+        }
+
+        // Enforce numeric-only input for specific fields and prevent negative values
+        function enforceNumericInputs() {
+            const selectors = ['#zipCode', '#reg-age', '#accountNumber', '#cardNumber', '#cvv', '#reg-phone'];
+            selectors.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => {
+                    el.setAttribute('inputmode', 'numeric');
+                    el.setAttribute('pattern', '\\d*');
+                    el.addEventListener('input', (e) => {
+                        const cleaned = e.target.value.replace(/[^0-9]/g, '');
+                        e.target.value = cleaned;
+                        const minAttr = e.target.getAttribute('min');
+                        if (minAttr !== null && cleaned !== '' && Number(cleaned) < Number(minAttr)) {
+                            e.target.value = String(Math.max(Number(cleaned), Number(minAttr)));
+                        }
+                    });
+                });
+            });
         }
         
         async function placeOrder() {
@@ -359,8 +375,8 @@
             };
 
             try {
-                // Save pending order and redirect to payment simulator
-                localStorage.setItem('hersstep_pendingOrder', JSON.stringify(orderData));
+                // Save pending order (session only) and redirect to payment simulator
+                sessionStorage.setItem('hersstep_pendingOrder', JSON.stringify(orderData));
                 showNotification('Redirecting to payment simulator...', 'info');
                 setTimeout(() => {
                     window.location.href = 'payment-sim.html';
@@ -375,7 +391,7 @@
         (function handlePaymentReturn() {
             const params = new URLSearchParams(window.location.search);
             const paymentStatus = params.get('payment');
-            const pendingRaw = localStorage.getItem('hersstep_pendingOrder');
+            const pendingRaw = sessionStorage.getItem('hersstep_pendingOrder');
             if (pendingRaw) {
                 try {
                     const pending = JSON.parse(pendingRaw);
@@ -436,6 +452,7 @@
             window.cart.loadCart();
         }
         renderOrderSummary();
+        enforceNumericInputs();
         });
     </script>
 </body>
